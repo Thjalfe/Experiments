@@ -1,10 +1,12 @@
-import InstrumentControl.OSA_control as OSA_control
-import InstrumentControl.instrument_class as misc
 from util_funcs import analyze_data
 import numpy as np
 import time
+import sys
 sys.path.append("C:/Users/FTNK-fod/Documents/thjalfe")
 from send_mail import send_email_with_gmail_api as mail
+sys.path.append("U:/Elec/NONLINEAR-FOD/Thjalfe/InstrumentControl/InstrumentControl")
+import instrument_class as misc
+from OSA_control import OSA
 
 
 def save_sweep(data_folder, filename, **data):
@@ -47,7 +49,7 @@ def make_pump_power_equal(
 
     i = 0
     while True:
-        OSA_temp = OSA_control.OSA(
+        OSA_temp = OSA(
             wl2 - 1,
             wl1 + 1,
             resolution=0.05,
@@ -166,7 +168,7 @@ def run_experiment(
             # ando2.adjust_wavelength(OSA_GPIB_num=OSA_GPIB_num)
             if equal_pump_power:
                 make_pump_power_equal(ando1, ando2, wl1_temp, wl2_temp)
-            OSA_temp = OSA_control.OSA(
+            OSA_temp = OSA(
                 wl2_temp - 1,
                 wl1_temp + 1,
                 resolution=0.05,
@@ -174,7 +176,7 @@ def run_experiment(
                 GPIB_num=OSA_GPIB_num,
             )
             OSA_temp.save(f"{data_folder}/pumps{wl2_temp}_{wl1_temp}")
-            OSA_temp = OSA_control.OSA(
+            OSA_temp = OSA(
                 sig_start - np.abs(wl1_temp - wl2_temp),
                 sig_start + np.abs(wl1_temp - wl2_temp),
                 resolution=0.05,
@@ -185,7 +187,7 @@ def run_experiment(
             for j in range(num_sweeps):
                 TiSa.delta_wl_nm(del_wl)
                 time.sleep(0.5)
-                OSA_temp = OSA_control.OSA(
+                OSA_temp = OSA(
                     lims[0],
                     lims[1],
                     resolution=0.05,

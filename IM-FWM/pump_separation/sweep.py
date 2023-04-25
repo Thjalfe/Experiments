@@ -1,9 +1,11 @@
-import InstrumentControl.OSA_control as OSA_control
-import InstrumentControl.laser_control as laser
-from find_CE_peak_locs import analyze_data, load_raw_data
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 from experiment_funcs import run_experiment
+from util_funcs import load_raw_data
+sys.path.append("U:/Elec/NONLINEAR-FOD/Thjalfe/InstrumentControl/InstrumentControl")
+from OSA_control import OSA
+from laser_control import laser, TiSapphire
 
 
 plt.ion()
@@ -13,10 +15,10 @@ plt.ion()
 # print(rm.list_resources())
 GPIB_val = 0
 # |%%--%%| <nhkI9B4MS1|BLJsMAQTCU>
-TiSa = laser.TiSapphire(3)
-ando1 = laser.laser("ando", 1572, power=8, GPIB_num=GPIB_val)
-ando2 = laser.laser("ando2", 1570, power=8, GPIB_num=GPIB_val)
-osa = OSA_control.OSA(
+TiSa = TiSapphire(3)
+ando1 = laser("ando", 1572, power=8, GPIB_num=GPIB_val)
+ando2 = laser("ando2", 1570, power=8, GPIB_num=GPIB_val)
+osa = OSA(
     979, 984, resolution=0.05, GPIB_num=[GPIB_val, 19], sweeptype="SGL"
 )
 
