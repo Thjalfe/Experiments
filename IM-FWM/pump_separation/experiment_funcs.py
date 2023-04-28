@@ -2,15 +2,14 @@ from util_funcs import analyze_data
 import numpy as np
 import time
 import sys
-sys.path.append("C:/Users/FTNK-fod/Documents/thjalfe")
-from send_mail import send_email_with_gmail_api as mail
+import os
+
 sys.path.append("U:/Elec/NONLINEAR-FOD/Thjalfe/InstrumentControl/InstrumentControl")
 import instrument_class as misc
 from OSA_control import OSA
 
 
 def save_sweep(data_folder, filename, **data):
-    import os
     import pickle
 
     # Create the folder if it doesn't exist
@@ -58,8 +57,8 @@ def make_pump_power_equal(
         )
         wavelength_range1 = get_indices(OSA_temp.wavelengths, [wl1 - 0.1, wl1 + 0.1])
         wavelength_range2 = get_indices(OSA_temp.wavelengths, [wl2 - 0.1, wl2 + 0.1])
-        peak1 = np.max(OSA_temp.powers[wavelength_range1[0]: wavelength_range1[1]])
-        peak2 = np.max(OSA_temp.powers[wavelength_range2[0]: wavelength_range2[1]])
+        peak1 = np.max(OSA_temp.powers[wavelength_range1[0] : wavelength_range1[1]])
+        peak2 = np.max(OSA_temp.powers[wavelength_range2[0] : wavelength_range2[1]])
         # peaks, properties = find_peaks(OSA_temp.powers, height=min_height)
         # sorted_peaks_indices = np.argsort(properties["peak_heights"])[::-1]
         # largest_peaks_indices = sorted_peaks_indices[:2]
@@ -103,7 +102,7 @@ def get_new_OSA_lims(OSA_local, p1wl, p2wl, c=2.998 * 10**8):
     return OSA_lims
 
 
-def new_sig_start(data_folder, pumpwl_low, pumpwl_high, wl_tot):
+def new_sig_start(data_folder, pumpwl_low, pumpwl_high, wl_tot, max_peak_min_height):
     """
     Determine the new signal start position based on the analyzed data.
 
@@ -116,10 +115,16 @@ def new_sig_start(data_folder, pumpwl_low, pumpwl_high, wl_tot):
     Returns:
         float: New signal start position.
     """
-    peaks_sorted = analyze_data(data_folder, pump_wl_pairs=[(pumpwl_low, pumpwl_high)])[
-        (pumpwl_low, pumpwl_high)
-    ]
+    peaks_sorted = analyze_data(
+        data_folder,
+        pump_wl_pairs=[(pumpwl_low, pumpwl_high)],
+        max_peak_min_height=max_peak_min_height,
+    )[(pumpwl_low, pumpwl_high)]
     max_peak_idx = list(peaks_sorted)[0]
+    if type(max_peak_idx) is not int:
+        raise ValueError(
+            "No peak found in the data. Maybe the max_peak_min_height is too high?"
+        )
     return peaks_sorted[max_peak_idx]["peak_positions"][0] - wl_tot / 2
 
 
@@ -130,14 +135,18 @@ def run_experiment(
     TiSa,
     ando1_wl,
     ando2_wl,
-    equal_pump_power,
-    log_pm,
     num_sweeps,
     del_wl,
     wl_tot,
     sig_start,
+    adjust_laser_wavelengths=True,
+    equal_pump_power=False,
+    log_pm=False,
     OSA_sens="SHI1",
+    OSA_res=0.05,
+    over_sampling=2.5,
     OSA_GPIB_num=[0, 19],
+    max_peak_min_height=-35,
 ):
     """
     Run the main loop of the experiment and send an email notification upon completion or error.
@@ -154,79 +163,62 @@ def run_experiment(
         sig_start(float): Start wavelength for TiSa.
         GPIB_val (int, optional): GPIB value for the OSA. Defaults to 19.
     """
-    import traceback
-
-    try:
-        for i in range(len(ando1_wl)):
-            wl1_temp = ando1_wl[i]
-            wl2_temp = ando2_wl[i]
-            ando1.set_power(8)
-            ando2.set_power(8)
-            ando1.set_wavelength(wl1_temp)
-            # ando1.adjust_wavelength(sens="SMID", OSA_GPIB_num=OSA_GPIB_num)
-            ando2.set_wavelength(wl2_temp)
-            # ando2.adjust_wavelength(OSA_GPIB_num=OSA_GPIB_num)
-            if equal_pump_power:
-                make_pump_power_equal(ando1, ando2, wl1_temp, wl2_temp)
-            OSA_temp = OSA(
-                wl2_temp - 1,
-                wl1_temp + 1,
-                resolution=0.05,
-                sensitivity=OSA_sens,
-                GPIB_num=OSA_GPIB_num,
-            )
-            OSA_temp.save(f"{data_folder}/pumps{wl2_temp}_{wl1_temp}")
-            OSA_temp = OSA(
-                sig_start - np.abs(wl1_temp - wl2_temp),
-                sig_start + np.abs(wl1_temp - wl2_temp),
-                resolution=0.05,
-                sensitivity=OSA_sens,
-                GPIB_num=OSA_GPIB_num,
-            )
-            lims = get_new_OSA_lims(OSA_temp, wl1_temp, wl2_temp)
-            for j in range(num_sweeps):
-                TiSa.delta_wl_nm(del_wl)
-                time.sleep(0.5)
-                OSA_temp = OSA(
-                    lims[0],
-                    lims[1],
-                    resolution=0.05,
-                    sensitivity=OSA_sens,
-                    GPIB_num=OSA_GPIB_num,
+    if not os.path.exists(data_folder):
+        os.makedirs(data_folder)
+    for i in range(len(ando1_wl)):
+        wl1_temp = ando1_wl[i]
+        wl2_temp = ando2_wl[i]
+        ando1.set_power(8)
+        ando2.set_power(8)
+        ando1.set_wavelength(wl1_temp)
+        ando2.set_wavelength(wl2_temp)
+        if adjust_laser_wavelengths:
+            ando1.adjust_wavelength(sens="SMID", OSA_GPIB_num=OSA_GPIB_num)
+            ando2.adjust_wavelength(OSA_GPIB_num=OSA_GPIB_num)
+        if equal_pump_power:
+            make_pump_power_equal(ando1, ando2, wl1_temp, wl2_temp)
+        OSA_temp = OSA(
+            wl2_temp - 1,
+            wl1_temp + 1,
+            resolution=OSA_res,
+            sensitivity=OSA_sens,
+            GPIB_num=OSA_GPIB_num,
+        )
+        OSA_temp.save(f"{data_folder}/pumps{wl2_temp}_{wl1_temp}")
+        OSA_temp.set_span(
+            sig_start - np.abs(wl1_temp - wl2_temp),
+            sig_start + np.abs(wl1_temp - wl2_temp),
+        )
+        OSA_temp.sweep()
+        lims = get_new_OSA_lims(OSA_temp, wl1_temp, wl2_temp)
+        temp_sampling = over_sampling * 2 * (lims[1] - lims[0]) / OSA_res
+        OSA_temp.set_sample(temp_sampling)
+        for j in range(num_sweeps):
+            TiSa.delta_wl_nm(del_wl)
+            time.sleep(0.5)
+            OSA_temp.set_span(lims[0], lims[1])
+            OSA_temp.sweep()
+            if log_pm:
+                save_sweep(
+                    data_folder,
+                    f"{wl2_temp}_{wl1_temp}_{j}",
+                    wavelengths=OSA_temp.wavelengths,
+                    powers=OSA_temp.powers,
+                    ando_powers=(ando1.power, ando2.power),
+                    PM=misc.PM().read(),
                 )
-                if log_pm:
-                    save_sweep(
-                        data_folder,
-                        f"{wl2_temp}_{wl1_temp}_{j}",
-                        wavelengths=OSA_temp.wavelengths,
-                        powers=OSA_temp.powers,
-                        ando_powers=(ando1.power, ando2.power),
-                        PM=misc.PM().read(),
-                    )
-                else:
-                    save_sweep(
-                        data_folder,
-                        f"{wl2_temp}_{wl1_temp}_{j}",
-                        wavelengths=OSA_temp.wavelengths,
-                        powers=OSA_temp.powers,
-                        ando_powers=(ando1.power, ando2.power),
-                    )
+            else:
+                save_sweep(
+                    data_folder,
+                    f"{wl2_temp}_{wl1_temp}_{j}",
+                    wavelengths=OSA_temp.wavelengths,
+                    powers=OSA_temp.powers,
+                    ando_powers=(ando1.power, ando2.power),
+                )
 
-                lims = get_new_OSA_lims(OSA_temp, wl1_temp, wl2_temp)
-            sig_start = new_sig_start(data_folder, wl2_temp, wl1_temp, wl_tot)
-            # Set the new wavelength for TiSa
-            TiSa.set_wavelength(sig_start, OSA_GPIB_num=OSA_GPIB_num)
-
-        # Set email subject and body for successful completion
-        subject = "Experiment finished successfully"
-        body = "kom og sluk setup"
-    except:
-        # Set email subject and body for errors
-        subject = "Error in experiment"
-        error_message = traceback.format_exc()
-        body = f"kom og fiks setup\n\nError details:\n{error_message}"
-
-    # Send email notification
-    to = "thjalfe96@gmail.com"
-    token_path = "C:/Users/FTNK-fod/Documents/thjalfe/token.pickle"
-    mail(subject, body, to, token_path)
+            lims = get_new_OSA_lims(OSA_temp, wl1_temp, wl2_temp)
+        sig_start = new_sig_start(
+            data_folder, wl2_temp, wl1_temp, wl_tot, max_peak_min_height
+        )
+        # Set the new wavelength for TiSa
+        TiSa.set_wavelength(sig_start, OSA_GPIB_num=OSA_GPIB_num)

@@ -228,9 +228,9 @@ def analyze_data(
     pump_wl_pairs=None,
     nan_filter=-85,
     prominence=0.1,
-    height=-65,
+    height=-75,
     tolerance_nm=0.25,
-    max_peak_height=-25,
+    max_peak_min_height=-35,
     file_type="pkl",
 ):
     data, chosen_pairs, _ = load_raw_data(
@@ -240,7 +240,7 @@ def analyze_data(
     all_sorted_peak_data = {}
     for i, dataset in enumerate(data):
         peak_data = process_dataset(
-            dataset, prominence, height, chosen_pairs[i], tolerance_nm, max_peak_height
+            dataset, prominence, height, chosen_pairs[i], tolerance_nm, max_peak_min_height
         )
         sorted_peak_data = sort_peak_data(peak_data, "differences")
         all_sorted_peak_data[chosen_pairs[i]] = sorted_peak_data
@@ -264,14 +264,14 @@ def get_all_unique_pairs_list(data_folder, file_type="pkl"):
 
 
 def extract_pump_numbers(file_path, pump_name):
-    match = re.search(rf"{pump_name}(\d+\.\d+)_(\d+\.\d+)_", file_path)
+    match = re.search(rf"{pump_name}_([\d\.]+)_([\d\.]+)\.csv", file_path)
     if match:
         return float(match.group(1)), float(match.group(2))
     else:
         return 0, 0
 
 
-def load_pump_files(data_folder, pump_name="pumps", nan_filter=-80):
+def load_pump_files(data_folder, pump_name="pump_name", nan_filter=-80):
     pattern = os.path.join(data_folder, f"{pump_name}*")
     matching_files = glob.glob(pattern)
     # Sort the matching_files list based on the first number in descending order

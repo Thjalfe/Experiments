@@ -4,6 +4,8 @@ from util_funcs import (
     load_raw_data,
     get_all_unique_pairs_list,
     load_pump_files,
+    process_dataset,
+    sort_peak_data,
 )
 from plotting_funcs import save_plot, plot_top_n_datasets
 import matplotlib.pyplot as plt
@@ -12,17 +14,18 @@ import os
 plt.style.use("custom")
 plt.ion()
 
-data_folder = "./data_pulsed/"
-# data_folder = data_folder[:-1]
+data_folder = "./data/pulsed/SMF_pickup_hi1060/second_dataset/"
+# data_folder = "./data/pulsed/MMF_pickup/"
 file_type = "pkl"
-unique_pairs = get_all_unique_pairs_list(data_folder, file_type=file_type)
-# unique_pairs = (1569.0, 1573.0)
+# unique_pairs = get_all_unique_pairs_list(data_folder, file_type=file_type)
+unique_pairs = (1569, 1573)
+data, chosen_pairs, other = load_raw_data(
+    data_folder, -85, None, unique_pairs, file_type=file_type
+)
 sorted_peak_data = analyze_data(
     data_folder, pump_wl_pairs=unique_pairs, file_type=file_type
 )
-data, keys, other = load_raw_data(
-    data_folder, -85, None, unique_pairs, file_type=file_type
-)
+
 # |%%--%%| <bUxbvLaNgk|58VOLX1DCi>
 # Plot the top n datasets
 n = 5  # Top 5 datasets
@@ -30,9 +33,9 @@ idx = 2
 plot_top_n_datasets(
     sorted_peak_data[unique_pairs[idx]], data[idx], n, unique_pairs[idx]
 )
-save_plot(
-    f"./figs/pulsed/CE_top_{n}_datasets_{unique_pairs[idx][0]}_{unique_pairs[idx][1]}_weird_peak"
-)
+# save_plot(
+#     f"./figs/pulsed/CE_top_{n}_datasets_{unique_pairs[idx][0]}_{unique_pairs[idx][1]}_weird_peak"
+# )
 # |%%--%%| <58VOLX1DCi|79QO9wN6Wo>
 best_ce = []
 best_ce_loc = []
