@@ -172,12 +172,25 @@ def process_dataset(
 
 
 def sort_peak_data(peak_data, sort_key):
-    return dict(
+    abs_sort = dict(
         sorted(
             peak_data.items(),
             key=lambda x: min(x[1][sort_key]) if type(x[1]) == dict else float("inf"),
         )
     )
+    blue_shift_sort = dict(
+        sorted(
+            peak_data.items(),
+            key=lambda x: x[1][sort_key][0] if (type(x[1]) == dict and len(x[1][sort_key]) > 0) else float("inf"),
+        )
+    )
+    red_shift_sort = dict(
+        sorted(
+            peak_data.items(),
+            key=lambda x: x[1][sort_key][1] if (type(x[1]) == dict and len(x[1][sort_key]) > 1) else float("inf"),
+        )
+    )
+    return abs_sort, blue_shift_sort, red_shift_sort
 
 
 def load_raw_data(
@@ -238,14 +251,27 @@ def analyze_data(
     )
 
     all_sorted_peak_data = {}
+    all_blueshift_sorted_peak_data = {}
+    all_redshift_sorted_peak_data = {}
     for i, dataset in enumerate(data):
         peak_data = process_dataset(
-            dataset, prominence, height, chosen_pairs[i], tolerance_nm, max_peak_min_height
+            dataset,
+            prominence,
+            height,
+            chosen_pairs[i],
+            tolerance_nm,
+            max_peak_min_height,
         )
-        sorted_peak_data = sort_peak_data(peak_data, "differences")
+        (
+            sorted_peak_data,
+            blueshift_sorted_peak_data,
+            redshift_sorted_peak_data,
+        ) = sort_peak_data(peak_data, "differences")
         all_sorted_peak_data[chosen_pairs[i]] = sorted_peak_data
+        all_blueshift_sorted_peak_data[chosen_pairs[i]] = blueshift_sorted_peak_data
+        all_redshift_sorted_peak_data[chosen_pairs[i]] = redshift_sorted_peak_data
 
-    return all_sorted_peak_data
+    return all_sorted_peak_data, all_blueshift_sorted_peak_data, all_redshift_sorted_peak_data
 
 
 def get_all_unique_pairs_list(data_folder, file_type="pkl"):
