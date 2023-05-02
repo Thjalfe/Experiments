@@ -1,6 +1,12 @@
 import numpy as np
+import os
+import sys
+current_file_path = os.path.abspath('.py')
+current_file_dir = os.path.dirname(current_file_path)
+project_root_dir = os.path.join(current_file_dir, '..', '..')
+sys.path.append(os.path.normpath(project_root_dir))
 import matplotlib.pyplot as plt
-from util_funcs import load_pump_files
+from pump_separation.funcs.utils import load_pump_files
 pump_folder = './data/char_setup/pump_powers/'
 pump_files = ['throughsetup', 'wdm_tap']
 through_setup = load_pump_files(pump_folder, pump_name=pump_files[0])

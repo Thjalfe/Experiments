@@ -1,4 +1,4 @@
-from util_funcs import analyze_data
+from .util_funcs import analyze_data
 import numpy as np
 import time
 import sys

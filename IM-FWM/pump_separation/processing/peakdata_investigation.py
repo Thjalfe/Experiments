@@ -1,20 +1,23 @@
+import os
+import sys
+current_file_path = os.path.abspath('.py')
+current_file_dir = os.path.dirname(current_file_path)
+project_root_dir = os.path.join(current_file_dir, '..', '..')
+sys.path.append(os.path.normpath(project_root_dir))
 import numpy as np
-from util_funcs import (
+from pump_separation.funcs.utils import (
     analyze_data,
     load_raw_data,
     get_all_unique_pairs_list,
     load_pump_files,
-    process_dataset,
-    sort_peak_data,
 )
-from plotting_funcs import save_plot, plot_top_n_datasets
+from pump_separation.funcs.plotting import save_plot, plot_top_n_datasets
 import matplotlib.pyplot as plt
-import os
 
 plt.style.use("custom")
 plt.ion()
 
-data_folder = "./data/pulsed/SMF_pickup_hi1060/first_dataset/"
+data_folder = "../data/pulsed/SMF_pickup_hi1060/second_dataset/"
 # data_folder = "./data/pulsed/MMF_pickup/"
 file_type = "pkl"
 unique_pairs = get_all_unique_pairs_list(data_folder, file_type=file_type)
@@ -27,10 +30,10 @@ data, chosen_pairs, other = load_raw_data(
     blueshift_sorted_peak_data,
     redshift_sorted_peak_data,
 ) = analyze_data(data_folder, pump_wl_pairs=unique_pairs, file_type=file_type)
-dataset_cur = redshift_sorted_peak_data
+dataset_cur = blueshift_sorted_peak_data
 # |%%--%%| <bUxbvLaNgk|58VOLX1DCi>
 # Plot the top n datasets
-n = 4  # Top 5 datasets
+n = 4  # Top n datasets
 idx = 0
 plot_top_n_datasets(
     dataset_cur[unique_pairs[idx]], data[idx], n, unique_pairs[idx]
