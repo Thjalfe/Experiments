@@ -104,7 +104,7 @@ def return_filtered_peaks(
         peak = min(peaks, key=lambda x: abs(x - pos))
         if abs(peak - pos) <= tolerance_idxs:
             filtered_peaks.append(peak)
-    return filtered_peaks
+    return list(np.unique(filtered_peaks))
 
 
 def calculate_differences(peaks, data):

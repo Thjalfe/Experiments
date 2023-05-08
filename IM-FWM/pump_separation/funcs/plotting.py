@@ -33,9 +33,6 @@ def plot_top_n_datasets(sorted_peak_data, datasets, n, pairs):
     plt.figure()
     for index in top_n_indices:
         data = datasets[index]
-        np.savetxt(f'../data/forlars/{pairs[0]}_{pairs[1]}_{index}.csv', data)
-
-
         plt.plot(data[:, 0], data[:, 1], marker="o", linestyle="-")
         plt.plot(
             data[:, 0],

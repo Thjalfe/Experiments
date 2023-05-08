@@ -1,8 +1,9 @@
 import os
 import sys
-current_file_path = os.path.abspath('.py')
+
+current_file_path = os.path.abspath(".py")
 current_file_dir = os.path.dirname(current_file_path)
-project_root_dir = os.path.join(current_file_dir, '..', '..')
+project_root_dir = os.path.join(current_file_dir, "..", "..")
 sys.path.append(os.path.normpath(project_root_dir))
 import numpy as np
 from pump_separation.funcs.utils import (
@@ -14,10 +15,10 @@ from pump_separation.funcs.utils import (
 from pump_separation.funcs.plotting import save_plot, plot_top_n_datasets
 import matplotlib.pyplot as plt
 
-plt.style.use("custom")
+# plt.style.use("custom")
 plt.ion()
 
-data_folder = "../data/pulsed/SMF_pickup_hi1060/first_dataset/"
+data_folder = "../data/pulse/3us_50duty/manual_specs/"
 # data_folder = "../data/pulsed/"
 # data_folder = "../data/pulsed/MMF_pickup/"
 file_type = "pkl"
@@ -32,29 +33,34 @@ data, chosen_pairs, other = load_raw_data(
     redshift_sorted_peak_data,
 ) = analyze_data(data_folder, pump_wl_pairs=unique_pairs, file_type=file_type)
 dataset_cur = redshift_sorted_peak_data
-# |%%--%%| <bUxbvLaNgk|58VOLX1DCi>
+# |%%--%%| <bUxbvLaNgk|2BoWz93aQn>
 # Plot the top n datasets
-n = 4  # Top n datasets
+n = 1  # Top n datasets
 idx = 0
-plot_top_n_datasets(
-    dataset_cur[unique_pairs[idx]], data[idx], n, unique_pairs[idx]
-)
+plot_top_n_datasets(dataset_cur[unique_pairs[idx]], data[idx], n, unique_pairs[idx])
 # save_plot(
 #     f"./figs/pulsed/CE_top_{n}_datasets_{unique_pairs[idx][0]}_{unique_pairs[idx][1]}_weird_peak"
 # )
-# |%%--%%| <58VOLX1DCi|79QO9wN6Wo>
+# |%%--%%| <2BoWz93aQn|Lj8QJhzGLK>
+import pickle
+import glob
+from natsort import natsorted
+
+files = natsorted(glob.glob("../data/pulse/3us_50duty/manual_specs/*.pkl"))[::-1]
+file = files[10]
+with open(file, "rb") as f:
+    data = pickle.load(f)
+plt.plot(data["wavelengths"], data["powers"])
+
+# |%%--%%| <Lj8QJhzGLK|79QO9wN6Wo>
 best_ce = []
 best_ce_loc = []
 best_idx = []
 for i, key in enumerate(chosen_pairs):
     best_idx.append(list(dataset_cur[key].keys())[0])
     best_ce.append(min(dataset_cur[key][best_idx[i]]["differences"]))
-    temp_best_loc = np.argmin(dataset_cur[key][best_idx[i]]["differences"])
-    best_ce_loc.append(
-        dataset_cur[key][best_idx[i]]["peak_positions"][temp_best_loc]
-    )
-    # best_ce.append(dataset_cur[key][0])
-    # best_ce_loc.append(dataset_cur[key][1])
+    temp_best_loc = np.argmax(dataset_cur[key][best_idx[i]]["peak_values"])
+    best_ce_loc.append(dataset_cur[key][best_idx[i]]["peak_positions"][temp_best_loc])
 x = np.arange(1, len(best_ce) + 1)
 fig, ax = plt.subplots(2, 1)
 ax[0].plot(x, -np.array(best_ce), marker="o", linestyle="-")
@@ -64,14 +70,10 @@ ax[1].plot(x, best_ce_loc, marker="o", linestyle="-")
 ax[1].set_xlabel("Pump separation [nm]")
 ax[1].set_ylabel("Signal location [nm]")
 ax[1].grid(True)
-# also save the data that is plotted here as a csv file
-import pandas as pd
-dataframe = pd.DataFrame({'CE': best_ce, 'CE_loc': best_ce_loc, 'pump_sep': x})
-dataframe.to_csv('CE_vs_pump_separation.csv')
 
 # save_plot("./figs/pulsed/CE_vs_pump_separation")
 # fig.savefig('CE_vs_pump_separation.png')
-# |%%--%%| <79QO9wN6Wo|Ftmiqvm323>
+# |%%--%%| <79QO9wN6Wo|GkLk0yBF4w>
 from scipy.signal import find_peaks
 
 
@@ -96,4 +98,4 @@ ax.set_ylabel("Power [dBm]")
 ax.grid(True)
 # ax.legend(loc="lower right")
 # plt.show()
-save_plot(f"./figs/char_setup/{file_str}")
+# save_plot(f"./figs/char_setup/{file_str}")

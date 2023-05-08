@@ -1,4 +1,4 @@
-from .util_funcs import analyze_data
+from .utils import analyze_data
 import numpy as np
 import time
 import sys
@@ -57,8 +57,8 @@ def make_pump_power_equal(
         )
         wavelength_range1 = get_indices(OSA_temp.wavelengths, [wl1 - 0.1, wl1 + 0.1])
         wavelength_range2 = get_indices(OSA_temp.wavelengths, [wl2 - 0.1, wl2 + 0.1])
-        peak1 = np.max(OSA_temp.powers[wavelength_range1[0] : wavelength_range1[1]])
-        peak2 = np.max(OSA_temp.powers[wavelength_range2[0] : wavelength_range2[1]])
+        peak1 = np.max(OSA_temp.powers[wavelength_range1[0]: wavelength_range1[1]])
+        peak2 = np.max(OSA_temp.powers[wavelength_range2[0]: wavelength_range2[1]])
         # peaks, properties = find_peaks(OSA_temp.powers, height=min_height)
         # sorted_peaks_indices = np.argsort(properties["peak_heights"])[::-1]
         # largest_peaks_indices = sorted_peaks_indices[:2]
@@ -102,7 +102,9 @@ def get_new_OSA_lims(OSA_local, p1wl, p2wl, c=2.998 * 10**8):
     return OSA_lims
 
 
-def new_sig_start(data_folder, pumpwl_low, pumpwl_high, wl_tot, max_peak_min_height):
+def new_sig_start(
+    data_folder, pumpwl_low, pumpwl_high, wl_tot, max_peak_min_height, sortby
+):
     """
     Determine the new signal start position based on the analyzed data.
 
@@ -115,17 +117,25 @@ def new_sig_start(data_folder, pumpwl_low, pumpwl_high, wl_tot, max_peak_min_hei
     Returns:
         float: New signal start position.
     """
-    peaks_sorted = analyze_data(
+    all_peaks, blue, red = analyze_data(
         data_folder,
         pump_wl_pairs=[(pumpwl_low, pumpwl_high)],
         max_peak_min_height=max_peak_min_height,
-    )[(pumpwl_low, pumpwl_high)]
-    max_peak_idx = list(peaks_sorted)[0]
+    )
+    if sortby == "red":
+        data = red[(pumpwl_low, pumpwl_high)]
+    elif sortby == "blue":
+        data = blue[(pumpwl_low, pumpwl_high)]
+    elif sortby == "all":
+        data = all_peaks[(pumpwl_low, pumpwl_high)]
+    else:
+        raise ValueError("sortby must be 'red', 'blue' or 'all'")
+    max_peak_idx = list(data)[0]
     if type(max_peak_idx) is not int:
         raise ValueError(
             "No peak found in the data. Maybe the max_peak_min_height is too high?"
         )
-    return peaks_sorted[max_peak_idx]["peak_positions"][0] - wl_tot / 2
+    return data[max_peak_idx]["peak_positions"][0] - wl_tot / 2
 
 
 def run_experiment(
@@ -147,6 +157,7 @@ def run_experiment(
     over_sampling=2.5,
     OSA_GPIB_num=[0, 19],
     max_peak_min_height=-35,
+    sortpeaksby="blue",
 ):
     """
     Run the main loop of the experiment and send an email notification upon completion or error.
@@ -198,6 +209,7 @@ def run_experiment(
             time.sleep(0.5)
             OSA_temp.set_span(lims[0], lims[1])
             OSA_temp.sweep()
+            OSA_temp.get_spectrum()
             if log_pm:
                 save_sweep(
                     data_folder,
@@ -218,7 +230,7 @@ def run_experiment(
 
             lims = get_new_OSA_lims(OSA_temp, wl1_temp, wl2_temp)
         sig_start = new_sig_start(
-            data_folder, wl2_temp, wl1_temp, wl_tot, max_peak_min_height
+            data_folder, wl2_temp, wl1_temp, wl_tot, max_peak_min_height, sortpeaksby
         )
         # Set the new wavelength for TiSa
         TiSa.set_wavelength(sig_start, OSA_GPIB_num=OSA_GPIB_num)
