@@ -17,8 +17,9 @@ import matplotlib.pyplot as plt
 plt.style.use("custom")
 plt.ion()
 
-data_folder = "../data/pulsed/SMF_pickup_hi1060/second_dataset/"
-# data_folder = "./data/pulsed/MMF_pickup/"
+data_folder = "../data/pulsed/SMF_pickup_hi1060/first_dataset/"
+# data_folder = "../data/pulsed/"
+# data_folder = "../data/pulsed/MMF_pickup/"
 file_type = "pkl"
 unique_pairs = get_all_unique_pairs_list(data_folder, file_type=file_type)
 # unique_pairs = (1569, 1573)
@@ -30,7 +31,7 @@ data, chosen_pairs, other = load_raw_data(
     blueshift_sorted_peak_data,
     redshift_sorted_peak_data,
 ) = analyze_data(data_folder, pump_wl_pairs=unique_pairs, file_type=file_type)
-dataset_cur = blueshift_sorted_peak_data
+dataset_cur = redshift_sorted_peak_data
 # |%%--%%| <bUxbvLaNgk|58VOLX1DCi>
 # Plot the top n datasets
 n = 4  # Top n datasets
@@ -54,7 +55,7 @@ for i, key in enumerate(chosen_pairs):
     )
     # best_ce.append(dataset_cur[key][0])
     # best_ce_loc.append(dataset_cur[key][1])
-x = np.arange(2, len(best_ce) + 2)
+x = np.arange(1, len(best_ce) + 1)
 fig, ax = plt.subplots(2, 1)
 ax[0].plot(x, -np.array(best_ce), marker="o", linestyle="-")
 ax[0].set_ylabel("CE [dB]")
@@ -63,7 +64,13 @@ ax[1].plot(x, best_ce_loc, marker="o", linestyle="-")
 ax[1].set_xlabel("Pump separation [nm]")
 ax[1].set_ylabel("Signal location [nm]")
 ax[1].grid(True)
+# also save the data that is plotted here as a csv file
+import pandas as pd
+dataframe = pd.DataFrame({'CE': best_ce, 'CE_loc': best_ce_loc, 'pump_sep': x})
+dataframe.to_csv('CE_vs_pump_separation.csv')
+
 # save_plot("./figs/pulsed/CE_vs_pump_separation")
+# fig.savefig('CE_vs_pump_separation.png')
 # |%%--%%| <79QO9wN6Wo|Ftmiqvm323>
 from scipy.signal import find_peaks
 

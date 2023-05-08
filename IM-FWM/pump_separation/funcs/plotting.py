@@ -33,12 +33,14 @@ def plot_top_n_datasets(sorted_peak_data, datasets, n, pairs):
     plt.figure()
     for index in top_n_indices:
         data = datasets[index]
+        np.savetxt(f'../data/forlars/{pairs[0]}_{pairs[1]}_{index}.csv', data)
 
-        # plt.plot(data[:, 0], data[:, 1], marker="o", linestyle="-")
+
+        plt.plot(data[:, 0], data[:, 1], marker="o", linestyle="-")
         plt.plot(
             data[:, 0],
             data[:, 1],
-            label=f"CE: -{np.min(sorted_peak_data[index]['differences']):.2f} dB",
+            label=f"CE: -{np.min(sorted_peak_data[index]['differences']):.2f} dB, {index}",
         )
         plt.title(f"Top {n} datasets based on CE for {pairs[0]} nm and {pairs[1]} nm")
         plt.xlabel("Wavelength [nm]")  # Replace with the appropriate label
