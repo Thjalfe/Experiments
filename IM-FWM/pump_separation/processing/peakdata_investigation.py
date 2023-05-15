@@ -1,79 +1,90 @@
 import os
 import sys
+import re
 
 current_file_path = os.path.abspath(".py")
 current_file_dir = os.path.dirname(current_file_path)
 project_root_dir = os.path.join(current_file_dir, "..", "..")
 sys.path.append(os.path.normpath(project_root_dir))
 import numpy as np
-from pump_separation.funcs.utils import (
-    analyze_data,
-    load_raw_data,
-    get_all_unique_pairs_list,
-    load_pump_files,
+from pump_separation.funcs.utils import load_pump_files
+from pump_separation.funcs.processing import (
+    sort_multiple_datasets,
+    multi_pumpsep_opt_ce,
 )
-from pump_separation.funcs.plotting import save_plot, plot_top_n_datasets
+from pump_separation.funcs.plotting import plot_top_n_datasets
 import matplotlib.pyplot as plt
 
 # plt.style.use("custom")
 plt.ion()
 
 data_folder = "../data/pulse/3us_50duty/manual_specs/"
-# data_folder = "../data/pulsed/"
-# data_folder = "../data/pulsed/MMF_pickup/"
+# data_folder = "../data/pulse/3us_25duty/sortby_redshift/"
+# data_folder = "../data/CW/"
+data_folder = "../data/CW/2.3W/"
+# data_folder = "../data/CW/2.15W/"
+# data_folder = "../data/CW/manual/"
 file_type = "pkl"
-unique_pairs = get_all_unique_pairs_list(data_folder, file_type=file_type)
-# unique_pairs = (1569, 1573)
-data, chosen_pairs, other = load_raw_data(
-    data_folder, -85, None, unique_pairs, file_type=file_type
-)
+data_folders = ["../data/CW/2.3W/", "../data/CW/2.15W/"]
+powers = []
+
+for folder in data_folders:
+    match = re.search(r'\d+(\.\d+)?', folder)
+    if match:
+        number = float(match.group())
+        powers.append(number)
 (
+    unique_pairs,
+    raw_data,
     sorted_peak_data,
-    blueshift_sorted_peak_data,
-    redshift_sorted_peak_data,
-) = analyze_data(data_folder, pump_wl_pairs=unique_pairs, file_type=file_type)
-dataset_cur = redshift_sorted_peak_data
-# |%%--%%| <bUxbvLaNgk|2BoWz93aQn>
+    blue_sorted_peak_data,
+    red_sorted_peak_data,
+) = sort_multiple_datasets(data_folders, file_type=file_type)
+
+# |%%--%%| <1FvH3TRUP5|2BoWz93aQn>
 # Plot the top n datasets
 n = 1  # Top n datasets
-idx = 0
-plot_top_n_datasets(dataset_cur[unique_pairs[idx]], data[idx], n, unique_pairs[idx])
+idx = 6
+plot_top_n_datasets(
+    red_sorted_peak_data[0][unique_pairs[idx]], raw_data[0][idx], n, unique_pairs[idx]
+)
 # save_plot(
 #     f"./figs/pulsed/CE_top_{n}_datasets_{unique_pairs[idx][0]}_{unique_pairs[idx][1]}_weird_peak"
 # )
-# |%%--%%| <2BoWz93aQn|Lj8QJhzGLK>
-import pickle
-import glob
-from natsort import natsorted
-
-files = natsorted(glob.glob("../data/pulse/3us_50duty/manual_specs/*.pkl"))[::-1]
-file = files[10]
-with open(file, "rb") as f:
-    data = pickle.load(f)
-plt.plot(data["wavelengths"], data["powers"])
-
-# |%%--%%| <Lj8QJhzGLK|79QO9wN6Wo>
-best_ce = []
-best_ce_loc = []
-best_idx = []
-for i, key in enumerate(chosen_pairs):
-    best_idx.append(list(dataset_cur[key].keys())[0])
-    best_ce.append(min(dataset_cur[key][best_idx[i]]["differences"]))
-    temp_best_loc = np.argmax(dataset_cur[key][best_idx[i]]["peak_values"])
-    best_ce_loc.append(dataset_cur[key][best_idx[i]]["peak_positions"][temp_best_loc])
-x = np.arange(1, len(best_ce) + 1)
+# |%%--%%| <lGX6ibyli3|N6SM5b714x>
+multi_ce_sorted = multi_pumpsep_opt_ce(red_sorted_peak_data, unique_pairs)
+idx = 1
 fig, ax = plt.subplots(2, 1)
-ax[0].plot(x, -np.array(best_ce), marker="o", linestyle="-")
+ax[0].plot(
+    multi_ce_sorted[idx][0, :],
+    np.array(multi_ce_sorted[idx][1, :]),
+    marker="o",
+    linestyle="-",
+)
 ax[0].set_ylabel("CE [dB]")
 ax[0].grid(True)
-ax[1].plot(x, best_ce_loc, marker="o", linestyle="-")
+ax[1].plot(
+    multi_ce_sorted[idx][0, :], multi_ce_sorted[idx][2, :], marker="o", linestyle="-"
+)
 ax[1].set_xlabel("Pump separation [nm]")
 ax[1].set_ylabel("Signal location [nm]")
 ax[1].grid(True)
 
-# save_plot("./figs/pulsed/CE_vs_pump_separation")
-# fig.savefig('CE_vs_pump_separation.png')
-# |%%--%%| <79QO9wN6Wo|GkLk0yBF4w>
+fig, ax = plt.subplots()
+for i in range(len(multi_ce_sorted)):
+    ax.plot(
+        multi_ce_sorted[i][0, :],
+        np.array(multi_ce_sorted[i][1, :]),
+        marker="o",
+        linestyle="-",
+        label=f"{powers[i]} W",
+    )
+ax.set_xlabel("Pump separation [nm]")
+ax.set_ylabel("CE [dB]")
+ax.legend()
+ax.grid(True)
+
+# |%%--%%| <N6SM5b714x|MqLXTtN0Vx>
 from scipy.signal import find_peaks
 
 
@@ -99,3 +110,4 @@ ax.grid(True)
 # ax.legend(loc="lower right")
 # plt.show()
 # save_plot(f"./figs/char_setup/{file_str}")
+# |%%--%%| <3jwmKKXNgQ|AlpBLQmXLT>

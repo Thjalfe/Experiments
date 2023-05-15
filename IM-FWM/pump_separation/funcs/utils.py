@@ -126,8 +126,9 @@ def calculate_differences(peaks, data):
 
     peak_differences = [
         abs(highest_peak_value - peak_values[i])
-        for i in range(len(peak_values))
         if i != highest_peak_index
+        else float("inf")
+        for i in range(len(peak_values))
     ]
     return peak_differences
 
@@ -172,6 +173,35 @@ def process_dataset(
 
 
 def sort_peak_data(peak_data, sort_key):
+    def get_signal_wavelength(item):
+        if type(item) == dict:
+            max_index = item["peak_values"].index(max(item["peak_values"]))
+            return item["peak_positions"][max_index]
+        else:
+            return None
+
+    def get_blue_shift(item, signal_wavelength, sort_key):
+        if type(item) == dict and sort_key in item:
+            blue_shift = [
+                item[sort_key][i]
+                for i, pos in enumerate(item["peak_positions"])
+                if pos < signal_wavelength
+            ]
+            return blue_shift[0] if len(blue_shift) > 0 else float("inf")
+        else:
+            return float("inf")
+
+    def get_red_shift(item, signal_wavelength, sort_key):
+        if type(item) == dict and sort_key in item:
+            red_shift = [
+                item[sort_key][i]
+                for i, pos in enumerate(item["peak_positions"])
+                if pos > signal_wavelength
+            ]
+            return min(red_shift) if len(red_shift) > 0 else float("inf")
+        else:
+            return float("inf")
+
     abs_sort = dict(
         sorted(
             peak_data.items(),
@@ -181,13 +211,14 @@ def sort_peak_data(peak_data, sort_key):
     blue_shift_sort = dict(
         sorted(
             peak_data.items(),
-            key=lambda x: x[1][sort_key][0] if (type(x[1]) == dict and len(x[1][sort_key]) > 0) else float("inf"),
+            key=lambda x: get_blue_shift(x[1], get_signal_wavelength(x[1]), sort_key),
         )
     )
+
     red_shift_sort = dict(
         sorted(
             peak_data.items(),
-            key=lambda x: x[1][sort_key][1] if (type(x[1]) == dict and len(x[1][sort_key]) > 1) else float("inf"),
+            key=lambda x: get_red_shift(x[1], get_signal_wavelength(x[1]), sort_key),
         )
     )
     return abs_sort, blue_shift_sort, red_shift_sort
@@ -271,7 +302,11 @@ def analyze_data(
         all_blueshift_sorted_peak_data[chosen_pairs[i]] = blueshift_sorted_peak_data
         all_redshift_sorted_peak_data[chosen_pairs[i]] = redshift_sorted_peak_data
 
-    return all_sorted_peak_data, all_blueshift_sorted_peak_data, all_redshift_sorted_peak_data
+    return (
+        all_sorted_peak_data,
+        all_blueshift_sorted_peak_data,
+        all_redshift_sorted_peak_data,
+    )
 
 
 def get_all_unique_pairs_list(data_folder, file_type="pkl"):

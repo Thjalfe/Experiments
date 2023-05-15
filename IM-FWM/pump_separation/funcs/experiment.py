@@ -135,7 +135,11 @@ def new_sig_start(
         raise ValueError(
             "No peak found in the data. Maybe the max_peak_min_height is too high?"
         )
-    return data[max_peak_idx]["peak_positions"][0] - wl_tot / 2
+    sig_peak_idx = np.argmax(data[max_peak_idx]['peak_values'])
+    peak_pos = data[max_peak_idx]["peak_positions"][sig_peak_idx]
+    new_start = peak_pos - wl_tot / 2
+    print(f"Peak found at {peak_pos:.2f} for ({pumpwl_low}, {pumpwl_high}). New signal start position: {new_start:.2f} nm")
+    return new_start
 
 
 def run_experiment(
@@ -157,6 +161,8 @@ def run_experiment(
     over_sampling=2.5,
     OSA_GPIB_num=[0, 19],
     max_peak_min_height=-35,
+    ando1_power=0,
+    ando2_power=0,
     sortpeaksby="blue",
 ):
     """
@@ -171,7 +177,7 @@ def run_experiment(
         num_sweeps (int): Number of sweeps to perform.
         del_wl (float): Delta wavelength for TiSa.
         wl_tot (float): Total wavelength range for the signal.
-        sig_start(float): Start wavelength for TiSa.
+        sig_start(float or list): Start wavelength for TiSa, can be list if  we want to set it manually. Mainly done when trying to redo measurements from earlier.
         GPIB_val (int, optional): GPIB value for the OSA. Defaults to 19.
     """
     if not os.path.exists(data_folder):
@@ -179,8 +185,8 @@ def run_experiment(
     for i in range(len(ando1_wl)):
         wl1_temp = ando1_wl[i]
         wl2_temp = ando2_wl[i]
-        ando1.set_power(8)
-        ando2.set_power(8)
+        ando1.set_power(ando1_power)
+        ando2.set_power(ando2_power)
         ando1.set_wavelength(wl1_temp)
         ando2.set_wavelength(wl2_temp)
         if adjust_laser_wavelengths:
@@ -196,10 +202,16 @@ def run_experiment(
             GPIB_num=OSA_GPIB_num,
         )
         OSA_temp.save(f"{data_folder}/pumps{wl2_temp}_{wl1_temp}")
-        OSA_temp.set_span(
-            sig_start - np.abs(wl1_temp - wl2_temp),
-            sig_start + np.abs(wl1_temp - wl2_temp),
-        )
+        if type(sig_start) == list:
+            OSA_temp.set_span(
+                sig_start[i] - np.abs(wl1_temp - wl2_temp),
+                sig_start[i] + np.abs(wl1_temp - wl2_temp),
+            )
+        else:
+            OSA_temp.set_span(
+                sig_start - np.abs(wl1_temp - wl2_temp),
+                sig_start + np.abs(wl1_temp - wl2_temp),
+            )
         OSA_temp.sweep()
         lims = get_new_OSA_lims(OSA_temp, wl1_temp, wl2_temp)
         temp_sampling = over_sampling * 2 * (lims[1] - lims[0]) / OSA_res
@@ -229,8 +241,12 @@ def run_experiment(
                 )
 
             lims = get_new_OSA_lims(OSA_temp, wl1_temp, wl2_temp)
-        sig_start = new_sig_start(
-            data_folder, wl2_temp, wl1_temp, wl_tot, max_peak_min_height, sortpeaksby
-        )
+        if type(sig_start) == list:
+            TiSa.set_wavelength(sig_start[i], OSA_GPIB_num=OSA_GPIB_num)
+            continue
+        else:
+            sig_start = new_sig_start(
+                data_folder, wl2_temp, wl1_temp, wl_tot, max_peak_min_height, sortpeaksby
+            )
         # Set the new wavelength for TiSa
         TiSa.set_wavelength(sig_start, OSA_GPIB_num=OSA_GPIB_num)

@@ -1,7 +1,12 @@
 {
-  "python.analysis.extraPaths": [
-    "${workspaceFolder}/IM-FWM",
-    "${workspaceFolder}/../InstrumentControl/"
-  ]
+    "include": [
+        "./**/*"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__"
+    ],
+    "extraPaths": [
+        "../InstrumentControl/InstrumentControl"
+    ]
 }
-
