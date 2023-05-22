@@ -21,11 +21,12 @@ plt.ion()
 data_folder = "../data/pulse/3us_50duty/manual_specs/"
 # data_folder = "../data/pulse/3us_25duty/sortby_redshift/"
 # data_folder = "../data/CW/"
-data_folder = "../data/CW/2.3W/"
+data_folder = ["../data/CW/2.3W/"]
 # data_folder = "../data/CW/2.15W/"
 # data_folder = "../data/CW/manual/"
 file_type = "pkl"
-data_folders = ["../data/CW/2.3W/", "../data/CW/2.15W/"]
+data_folders = ["../data/CW/2.3W/1/", "../data/CW/2.15W/", "../data/CW/2W/1/"]
+data_folders = ["../data/CW/2.3W/1/", "../data/CW/2W/1/"]
 powers = []
 
 for folder in data_folders:
@@ -43,17 +44,18 @@ for folder in data_folders:
 
 # |%%--%%| <1FvH3TRUP5|2BoWz93aQn>
 # Plot the top n datasets
+meas_num = 0
 n = 1  # Top n datasets
-idx = 6
+idx = 0
 plot_top_n_datasets(
-    red_sorted_peak_data[0][unique_pairs[idx]], raw_data[0][idx], n, unique_pairs[idx]
+    red_sorted_peak_data[meas_num][unique_pairs[meas_num][idx]], raw_data[meas_num][idx], n, unique_pairs[meas_num][idx]
 )
 # save_plot(
 #     f"./figs/pulsed/CE_top_{n}_datasets_{unique_pairs[idx][0]}_{unique_pairs[idx][1]}_weird_peak"
 # )
 # |%%--%%| <lGX6ibyli3|N6SM5b714x>
 multi_ce_sorted = multi_pumpsep_opt_ce(red_sorted_peak_data, unique_pairs)
-idx = 1
+idx = 0
 fig, ax = plt.subplots(2, 1)
 ax[0].plot(
     multi_ce_sorted[idx][0, :],
@@ -84,7 +86,43 @@ ax.set_ylabel("CE [dB]")
 ax.legend()
 ax.grid(True)
 
-# |%%--%%| <N6SM5b714x|MqLXTtN0Vx>
+# |%%--%%| <N6SM5b714x|QoepkHzooB>
+# comparing multiple measurements of same parameters
+def get_subfolders(folder_path):
+    subfolders = []
+    for root, dirs, files in os.walk(folder_path):
+        for dir in dirs:
+            subfolder_path = os.path.join(root, dir)
+            if not subfolder_path.endswith("/"):
+                subfolder_path += "/"
+            subfolders.append(subfolder_path)
+    return subfolders
+
+folder_path = '../data/CW/2.3W/'
+datafolders = get_subfolders(folder_path)
+(
+    unique_pairs,
+    raw_data,
+    sorted_peak_data,
+    blue_sorted_peak_data,
+    red_sorted_peak_data,
+) = sort_multiple_datasets(datafolders, file_type=file_type)
+multi_ce_sorted = multi_pumpsep_opt_ce(red_sorted_peak_data, unique_pairs)
+#|%%--%%| <QoepkHzooB|1JzUN3cFzN>
+fig, ax = plt.subplots()
+for i in range(len(multi_ce_sorted)):
+    ax.plot(
+        multi_ce_sorted[i][0, :],
+        np.array(multi_ce_sorted[i][2, :]),
+        marker="o",
+        linestyle="-",
+        # label=f"{powers[i]} W",
+    )
+ax.set_xlabel("Pump separation [nm]")
+ax.set_ylabel("CE [dB]")
+ax.legend()
+ax.grid(True)
+#|%%--%%| <1JzUN3cFzN|FGYnyXq8Pb>
 from scipy.signal import find_peaks
 
 
@@ -110,4 +148,4 @@ ax.grid(True)
 # ax.legend(loc="lower right")
 # plt.show()
 # save_plot(f"./figs/char_setup/{file_str}")
-# |%%--%%| <3jwmKKXNgQ|AlpBLQmXLT>
+# |%%--%%| <FGYnyXq8Pb|AlpBLQmXLT>

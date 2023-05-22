@@ -9,20 +9,20 @@ from picoscope2000 import PicoScope2000a
 
 pico_scope = PicoScope2000a()
 # |%%--%%| <tyF7do8SbO|tJEz7J6Y8a>
-start_frequency = 1 * 10**5
-waveform_size = 2**12
-waveform = (ctypes.c_int16 * waveform_size)()
-duty_cycle = 0.5
-threshold = int(waveform_size * duty_cycle)
-for i in range(waveform_size):
-    if i < threshold:
-        waveform[i] = 32767
-    else:
-        waveform[i] = -32767
+def set_square_wave(pico_awg, freq, duty_cycle, waveform_size=2**12, pk_to_pk=2 * 10**6, offset=1 * 10**6):
+    waveform = (ctypes.c_int16 * waveform_size)()
+    threshold = int(waveform_size * duty_cycle)
+    for i in range(waveform_size):
+        if i < threshold:
+            waveform[i] = 32767
+        else:
+            waveform[i] = -32767
+    pico_awg.awg.set_params(
+        freq, waveform_data=waveform, pk_to_pk=2 * 10**6, offset=1 * 10**6
+    )
 
-pico_scope.awg.set_params(
-    start_frequency, waveform_data=waveform, pk_to_pk=2 * 10**6, offset=1 * 10**6
-)
+freq = 1 * 10**5
+set_square_wave(pico_scope, freq, 0.5)
 # pico_scope.awg.set_params(start_frequency, wave_type=1, pk_to_pk=2 * 10**6, offset=1 * 10**6)
 # pico_scope.awg.set_params(start_frequency, wave_type=1, pk_to_pk=2 * 10**6)
 # pico_scope.awg.set_params(start_frequency, wave_type=1)
@@ -38,7 +38,7 @@ pico_scope.oscilloscope.set_params(
     timebase=3,
     threshold=50,
 )
-pico_scope.oscilloscope.set_sampling_rate(start_frequency, peaks_wanted=2)
+pico_scope.oscilloscope.set_sampling_rate(freq, peaks_wanted=2)
 time_axis1, y1, overflow, adc1, pulse_length, pulse_dist = pico_scope.oscilloscope.run_scope(threshold_high=0.5, threshold_low=0.5)
 print("Pulse length: ", pulse_length)
 print("Pulse distance: ", pulse_dist)
@@ -54,7 +54,7 @@ pico_scope.oscilloscope.set_params(
     timebase=3,
     threshold=50,
 )
-pico_scope.oscilloscope.set_sampling_rate(start_frequency, peaks_wanted=2)
+pico_scope.oscilloscope.set_sampling_rate(freq, peaks_wanted=2)
 time_axis, y, overflow, adc, pulse_length_out, pulse_dist_out = pico_scope.oscilloscope.run_scope()
 fig, ax = plt.subplots()
 ax1 = ax.twinx()
