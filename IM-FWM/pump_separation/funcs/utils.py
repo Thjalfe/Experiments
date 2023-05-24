@@ -172,14 +172,15 @@ def process_dataset(
     return peak_data
 
 
-def sort_peak_data(peak_data, sort_key):
-    def get_signal_wavelength(item):
-        if type(item) == dict:
-            max_index = item["peak_values"].index(max(item["peak_values"]))
-            return item["peak_positions"][max_index]
-        else:
-            return None
+def get_signal_wavelength(item):
+    if type(item) == dict:
+        max_index = item["peak_values"].index(max(item["peak_values"]))
+        return item["peak_positions"][max_index]
+    else:
+        return None
 
+
+def sort_peak_data(peak_data, sort_key):
     def get_blue_shift(item, signal_wavelength, sort_key):
         if type(item) == dict and sort_key in item:
             blue_shift = [
@@ -284,6 +285,7 @@ def analyze_data(
     all_sorted_peak_data = {}
     all_blueshift_sorted_peak_data = {}
     all_redshift_sorted_peak_data = {}
+    unsorted_peak_data = {}
     for i, dataset in enumerate(data):
         peak_data = process_dataset(
             dataset,
@@ -301,11 +303,12 @@ def analyze_data(
         all_sorted_peak_data[chosen_pairs[i]] = sorted_peak_data
         all_blueshift_sorted_peak_data[chosen_pairs[i]] = blueshift_sorted_peak_data
         all_redshift_sorted_peak_data[chosen_pairs[i]] = redshift_sorted_peak_data
-
+        unsorted_peak_data[chosen_pairs[i]] = peak_data
     return (
         all_sorted_peak_data,
         all_blueshift_sorted_peak_data,
         all_redshift_sorted_peak_data,
+        unsorted_peak_data,
     )
 
 
