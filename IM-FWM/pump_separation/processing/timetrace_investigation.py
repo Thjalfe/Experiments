@@ -1,4 +1,4 @@
-import os
+mport os
 import sys
 
 current_file_path = os.path.abspath(".py")
@@ -17,8 +17,8 @@ from pump_separation.funcs.processing import (
 )
 import matplotlib.pyplot as plt
 
-plt.style.use("custom")
-plt.rcParams["figure.figsize"] = (20, 11)
+# plt.style.use("custom")
+# plt.rcParams["figure.figsize"] = (20, 11)
 cols = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 plt.ion()
 fig_path = "../figs/CW/vary_pump_p/2.3W/"
@@ -66,6 +66,10 @@ parent_folder_paths = [
     "../data/CW/2.3W/old_power_settings/sorted_by_time_groups/group3/",
     "../data/CW/2.3W/old_power_settings/sorted_by_time_groups/group4/",
 ]
+parent_folder_paths = [
+    "../data/CW/2.3W/pol_dependence/Optimized_pol_for_all_pump_seps/const_sigstart_every_pumpsep/",
+    "../data/CW/2.3W/pol_dependence/Optimized_pol_for_all_pump_seps/random_sigstart_every_pumpsep/",
+]
 multi_ce_sorted_groups = []
 multi_ce_unsorted_groups = []
 unique_pairs = []
@@ -94,4 +98,4 @@ for pair in unique_pairs[idx]:
     ax.set_ylabel("CE [dB]")
     ax.set_title(f"CE vs signal wavelength for {wl_sep:.2f} nm separation")
     ax.legend()
-    fig.savefig(f"{fig_path}CE_vs_sigwl_{wl_sep:.2f}nm_sep_grouped.pdf", bbox_inches="tight")
+    # fig.savefig(f"{fig_path}CE_vs_sigwl_{wl_sep:.2f}nm_sep_grouped.pdf", bbox_inches="tight")

@@ -7,7 +7,7 @@ current_file_dir = os.path.dirname(current_file_path)
 project_root_dir = os.path.join(current_file_dir, "..", "..")
 sys.path.append(os.path.normpath(project_root_dir))
 import numpy as np
-from pump_separation.funcs.utils import load_pump_files
+from pump_separation.funcs.utils import load_pump_files, process_multiple_datasets
 from pump_separation.funcs.processing import (
     sort_multiple_datasets,
     multi_pumpsep_opt_ce,
@@ -16,7 +16,7 @@ from pump_separation.funcs.processing import (
 from pump_separation.funcs.plotting import plot_top_n_datasets
 import matplotlib.pyplot as plt
 
-plt.style.use("custom")
+# plt.style.use("custom")
 cols = plt.rcParams['axes.prop_cycle'].by_key()['color']
 plt.ion()
 plt.rcParams["figure.figsize"] = (20, 11)
@@ -240,7 +240,7 @@ ax[0].grid(True)
 ax[1].grid(True)
 fig.suptitle("CE and corresponding signal wl for each pump separation, all measurements")
 fig.savefig(f"{fig_path}all_raw_multi_ce_sorted.pdf", bbox_inches="tight")
-# |%%--%%| <MZu7GkP1Ji|ryH3WmzbAJ>
+# |%%--%%| <MZu7GkP1Ji|bftsCM8xhB>
 # Maximum value for each pump sep
 max_ce_loc = np.argmax(np.array(multi_ce_sorted)[:, 1, :], axis=0)
 max_ce = np.array(multi_ce_sorted)[:, 1, :][max_ce_loc, np.arange(0, 11)]
@@ -254,4 +254,15 @@ ax[1].set_ylabel("Signal wl [nm]")
 fig.suptitle("Max CE and corresponding signal wl for each pump separation")
 ax[0].grid(True)
 ax[1].grid(True)
-fig.savefig(f"{fig_path}max_multi_ce_sorted.pdf", bbox_inches="tight")
+# fig.savefig(f"{fig_path}max_multi_ce_sorted.pdf", bbox_inches="tight")
+#|%%--%%| <bftsCM8xhB|jbtqDP3wOM>
+
+file = np.load("./spectra.npy")
+num_iters = file.shape[1]
+ce = []
+for i in range(num_iters):
+    hello = process_single_dataset(file[:, i, :].T, 0.1, -65, (1566, 1576), 0.1, -35)
+    ce.append(-hello['differences'][-1])
+x_axis = np.arange(-0.25, 0.25, 0.01)
+plt.plot(x_axis, ce)
+plt.show()

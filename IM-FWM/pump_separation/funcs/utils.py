@@ -133,11 +133,45 @@ def calculate_differences(peaks, data):
     return peak_differences
 
 
-def process_dataset(
+def process_single_dataset(
+    data, prominence, height, peak_positions, tolerance_nm, max_peak_height
+):
+    """
+    Process a single dataset to find peaks, differences, peak values, and peak positions.
+
+    Args:
+        data (numpy.ndarray): 2D array containing data for a single dataset.
+        prominence (float): Minimum prominence of the peaks.
+        height (float): Minimum height of the peaks.
+        peak_positions (tuple): Tuple containing two pump wavelengths.
+        tolerance_nm (float): Tolerance_nm for peak position deviation.
+        max_peak_height (float, optional): Maximum peak height. This is to avoid false good measurements, in case a measurement failed and did not detect any peak at all.
+
+    Returns:
+        dict/str: A dictionary containing peaks, differences, peak values, and peak positions for the dataset or a string indicating a missing or single peak.
+    """
+    peaks = return_filtered_peaks(
+        data, prominence, height, peak_positions, tolerance_nm, max_peak_height
+    )
+    if peaks == ["No peak found"]:
+        return "No peak found"
+    if len(peaks) == 1:
+        return "Only signal peak found"
+
+    differences = calculate_differences(peaks, data)
+    return {
+        "peaks": peaks,
+        "differences": differences,
+        "peak_values": [data[p, 1] for p in peaks],
+        "peak_positions": [data[p, 0] for p in peaks],
+    }
+
+
+def process_multiple_datasets(
     dataset, prominence, height, peak_positions, tolerance_nm, max_peak_height
 ):
     """
-    Process the dataset to find peaks, differences, peak values, and peak positions.
+    Process all datasets to find peaks, differences, peak values, and peak positions for each dataset.
 
     Args:
         dataset (numpy.ndarray): 3D array containing data for each file.
@@ -152,23 +186,14 @@ def process_dataset(
     """
     peak_data = {}
     for m in range(dataset.shape[0]):
-        data = dataset[m]
-        peaks = return_filtered_peaks(
-            data, prominence, height, peak_positions, tolerance_nm, max_peak_height
+        peak_data[m] = process_single_dataset(
+            dataset[m],
+            prominence,
+            height,
+            peak_positions,
+            tolerance_nm,
+            max_peak_height,
         )
-        if peaks == ["No peak found"]:
-            peak_data[m] = "No peak found"
-            continue
-        if len(peaks) == 1:
-            peak_data[m] = "Only signal peak found"
-            continue
-        differences = calculate_differences(peaks, data)
-        peak_data[m] = {
-            "peaks": peaks,
-            "differences": differences,
-            "peak_values": [data[p, 1] for p in peaks],
-            "peak_positions": [data[p, 0] for p in peaks],
-        }
     return peak_data
 
 
@@ -287,7 +312,7 @@ def analyze_data(
     all_redshift_sorted_peak_data = {}
     unsorted_peak_data = {}
     for i, dataset in enumerate(data):
-        peak_data = process_dataset(
+        peak_data = process_multiple_datasets(
             dataset,
             prominence,
             height,

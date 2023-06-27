@@ -132,7 +132,7 @@ def new_sig_start(
     Returns:
         float: New signal start position.
     """
-    all_peaks, blue, red = analyze_data(
+    all_peaks, blue, red, _ = analyze_data(
         data_folder,
         pump_wl_pairs=[(pumpwl_low, pumpwl_high)],
         max_peak_min_height=max_peak_min_height,
@@ -176,7 +176,7 @@ def new_data_folder(data_folder):
     if existing_dirs:
         max_dir = max(existing_dirs, key=int)
     else:
-        max_dir = "1"
+        max_dir = "0"
 
     # Create next directory
     next_dir = str(int(max_dir) + 1)
@@ -194,6 +194,8 @@ def init_pump_and_osa(
     ando2,
     wl1,
     wl2,
+    ando1_wl_name,
+    ando2_wl_name,
     sig_start,
     ando1_power,
     ando2_power,
@@ -210,7 +212,7 @@ def init_pump_and_osa(
     if adjust_laser_wavelengths:
         ando1.adjust_wavelength(OSA_GPIB_num=OSA_GPIB_num)
         ando2.adjust_wavelength(OSA_GPIB_num=OSA_GPIB_num)
-    osa.save(f"{data_folder}/pumps{wl2}_{wl1}")
+    osa.save(f"{data_folder}/pumps{ando2_wl_name}_{ando1_wl_name}")
     if type(sig_start) == list:
         osa.set_span(
             sig_start - np.abs(wl1 - wl2),
@@ -222,7 +224,7 @@ def init_pump_and_osa(
             sig_start + np.abs(wl1 - wl2),
         )
     osa.sweep()
-    lims = get_new_OSA_lims(osa, wl1, wl2)
+    lims = get_new_OSA_lims(osa, ando1_wl_name, ando2_wl_name)
     temp_sampling = over_sampling * 2 * (lims[1] - lims[0]) / OSA_res
     osa.set_sample(temp_sampling)
     return lims
@@ -246,6 +248,7 @@ def sweep_tisa_and_save(
     max_peak_min_height,
     sortpeaksby,
     iter_num,
+    sig_start_external,
 ):
     for j in range(num_sweeps):
         TiSa.delta_wl_nm(del_wl)
@@ -270,29 +273,32 @@ def sweep_tisa_and_save(
                 ando_powers=(ando1.power, ando2.power),
             )
         lims = get_new_OSA_lims(osa, wl1, wl2)
-    if type(sig_start) == list:
-        TiSa.set_wavelength(sig_start[iter_num], OSA_GPIB_num=OSA_GPIB_num)
-        return
-    else:
-        sig_start = new_sig_start(
-            data_folder,
-            wl2,
-            wl1,
-            wl_tot,
-            max_peak_min_height,
-            sortpeaksby,
-        )
-    # Set the new wavelength for TiSa
-    TiSa.set_wavelength(sig_start, OSA_GPIB_num=OSA_GPIB_num)
+    if not sig_start_external:
+        if type(sig_start) == list:
+            TiSa.set_wavelength(sig_start[iter_num], OSA_GPIB_num=OSA_GPIB_num)
+            return
+        else:
+            sig_start = new_sig_start(
+                data_folder,
+                wl2,
+                wl1,
+                wl_tot,
+                max_peak_min_height,
+                sortpeaksby,
+            )
+# Set the new wavelength for TiSa
+        TiSa.set_wavelength(sig_start, OSA_GPIB_num=OSA_GPIB_num)
 
 
-def run_tisa_sweep(
+def run_tisa_sweep_all_pump_wls(
     data_folder,
     ando1,
     ando2,
     TiSa,
     ando1_wl,
     ando2_wl,
+    ando1_wl_names,
+    ando2_wl_names,
     num_sweeps,
     del_wl,
     wl_tot,
@@ -310,6 +316,8 @@ def run_tisa_sweep(
     ando2_power=0,
     sortpeaksby="blue",
     make_new_folder_iter=True,
+    sweep_pumps=True,
+    sig_start_external=False,
 ):
     """
     Run the main loop of the experiment and send an email notification upon completion or error.
@@ -330,7 +338,7 @@ def run_tisa_sweep(
         data_folder = new_data_folder(data_folder)
     osa = OSA(
         ando2_wl[0] - 1,
-        ando1_wl + 1,
+        ando1_wl[0] + 1,
         resolution=OSA_res,
         sensitivity=OSA_sens,
         GPIB_num=OSA_GPIB_num,
@@ -343,6 +351,8 @@ def run_tisa_sweep(
             ando2,
             wl1_temp,
             wl2_temp,
+            ando1_wl_names[i],
+            ando2_wl_names[i],
             sig_start,
             ando1_power,
             ando2_power,
@@ -363,11 +373,106 @@ def run_tisa_sweep(
             data_folder,
             lims,
             log_pm,
-            wl1_temp,
-            wl2_temp,
+            ando1_wl_names,
+            ando2_wl_names,
             sig_start,
             OSA_GPIB_num,
             max_peak_min_height,
             sortpeaksby,
             i,
+            sig_start_external,
         )
+
+
+def run_tisa_sweep_single_pump_wl(
+    data_folder,
+    ando1,
+    ando2,
+    TiSa,
+    ando1_wl,
+    ando2_wl,
+    ando1_wl_name,
+    ando2_wl_name,
+    num_sweeps,
+    del_wl,
+    wl_tot,
+    sig_start,
+    adjust_laser_wavelengths=True,
+    equal_ando_output_powers=True,
+    equal_pump_power=False,
+    log_pm=False,
+    OSA_sens="SHI1",
+    OSA_res=0.05,
+    over_sampling=2.5,
+    OSA_GPIB_num=[0, 19],
+    max_peak_min_height=-35,
+    ando1_power=0,
+    ando2_power=0,
+    sortpeaksby="blue",
+    make_new_folder_iter=True,
+    sig_start_external=False,
+):
+    """
+    Run the main loop of the experiment and send an email notification upon completion or error.
+
+    Args:
+        data_folder (str): The path to the data folder.
+        ando1_wl (list): List of wavelengths for Ando1.
+        ando2_wl (list): List of wavelengths for Ando2.
+        equal_pump_power (bool): If True, make the pump power equal.
+        log_pm (bool): If True, log the power meter data.
+        num_sweeps (int): Number of sweeps to perform.
+        del_wl (float): Delta wavelength for TiSa.
+        wl_tot (float): Total wavelength range for the signal.
+        sig_start(float or list): Start wavelength for TiSa, can be list if  we want to set it manually. Mainly done when trying to redo measurements from earlier.
+        GPIB_val (int, optional): GPIB value for the OSA. Defaults to 19.
+    """
+    if make_new_folder_iter:
+        data_folder = new_data_folder(data_folder)
+    osa = OSA(
+        ando2_wl - 1,
+        ando1_wl + 1,
+        resolution=OSA_res,
+        sensitivity=OSA_sens,
+        GPIB_num=OSA_GPIB_num,
+    )
+    lims = init_pump_and_osa(
+        data_folder,
+        osa,
+        ando1,
+        ando2,
+        ando1_wl,
+        ando2_wl,
+        ando1_wl_name,
+        ando2_wl_name,
+        sig_start,
+        ando1_power,
+        ando2_power,
+        over_sampling,
+        equal_ando_output_powers,
+        adjust_laser_wavelengths,
+        OSA_res,
+        OSA_GPIB_num,
+    )
+    if not data_folder.endswith("/"):
+        data_folder += "/"
+    sweep_tisa_and_save(
+        num_sweeps,
+        del_wl,
+        wl_tot,
+        TiSa,
+        osa,
+        ando1,
+        ando2,
+        data_folder,
+        lims,
+        log_pm,
+        ando1_wl_name,
+        ando2_wl_name,
+        sig_start,
+        OSA_GPIB_num,
+        max_peak_min_height,
+        sortpeaksby,
+        0,
+        sig_start_external,
+    )
