@@ -33,7 +33,7 @@ with open(processed_data_polopt, "rb") as f:
     pol_opt = pickle.load(f)
 
 fig_path = "../figs/CW/compare_pol_optimizing/"
-save_figs = True
+save_figs = False
 if not os.path.exists(fig_path):
     os.makedirs(fig_path)
 x_axis = np.arange(1, 12)

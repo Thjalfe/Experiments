@@ -375,3 +375,25 @@ def load_pump_files(data_folder, pump_name="pump_name", nan_filter=-80):
     pumps = np.array(pumps)
     pumps[:, :, 1][pumps[:, :, 1] < nan_filter] = np.nan
     return pumps, number_tuples
+
+
+def sort_by_pump_nm_difference(paths):
+    def nm_difference(path):
+        numbers = re.findall(r"(\d+.\d+)nm", path)
+        return abs(float(numbers[-1]) - float(numbers[-2]))
+
+    return sorted(paths, key=nm_difference)
+
+
+def extract_pump_wls(s):
+    numbers = re.findall(r"\d+\.\d+", s)
+    numbers = [float(num) for num in numbers]
+    numbers = numbers[-2:]
+    numbers.sort()
+    return numbers
+
+
+def get_subdirectories(directory):
+    return [
+        d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))
+    ]
