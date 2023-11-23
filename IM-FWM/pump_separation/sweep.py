@@ -352,7 +352,7 @@ for i in range(len(duty_cycle)):
     pico.oscilloscope.set_params(
         channel=2,
         enabled=1,
-        channel_range=7,
+        channel_range=oscilloscope_range,
         oversample=2,
         timebase=3,
         threshold=50,

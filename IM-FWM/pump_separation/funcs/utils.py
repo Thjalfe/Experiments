@@ -375,3 +375,31 @@ def load_pump_files(data_folder, pump_name="pump_name", nan_filter=-80):
     pumps = np.array(pumps)
     pumps[:, :, 1][pumps[:, :, 1] < nan_filter] = np.nan
     return pumps, number_tuples
+
+
+def extract_sig_wl_and_ce_multiple_spectra(
+    data,
+    pump_lst,
+    num_files,
+    prominence=0.1,
+    height=-75,
+    tolerance_nm=0.25,
+    max_peak_min_height=-35,
+):
+    sig_wl = np.zeros(num_files)
+    ce = np.zeros(num_files)
+    idler_wl = np.zeros(num_files)
+    for j in range(num_files):
+        processed = process_single_dataset(
+            data[j, :, :],
+            prominence,
+            height,
+            (pump_lst[0], pump_lst[1]),
+            tolerance_nm,
+            max_peak_min_height,
+        )
+        sig_loc = np.argmax(processed["differences"])
+        sig_wl[j] = processed["peak_positions"][sig_loc]
+        idler_wl[j] = processed["peak_positions"][sig_loc + 1]
+        ce[j] = processed["differences"][-1]
+    return sig_wl, ce, idler_wl
