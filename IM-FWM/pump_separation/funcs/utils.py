@@ -377,29 +377,23 @@ def load_pump_files(data_folder, pump_name="pump_name", nan_filter=-80):
     return pumps, number_tuples
 
 
-def extract_sig_wl_and_ce_multiple_spectra(
-    data,
-    pump_lst,
-    num_files,
-    prominence=0.1,
-    height=-75,
-    tolerance_nm=0.25,
-    max_peak_min_height=-35,
-):
-    sig_wl = np.zeros(num_files)
-    ce = np.zeros(num_files)
-    idler_wl = np.zeros(num_files)
-    for j in range(num_files):
-        processed = process_single_dataset(
-            data[j, :, :],
-            prominence,
-            height,
-            (pump_lst[0], pump_lst[1]),
-            tolerance_nm,
-            max_peak_min_height,
-        )
-        sig_loc = np.argmax(processed["differences"])
-        sig_wl[j] = processed["peak_positions"][sig_loc]
-        idler_wl[j] = processed["peak_positions"][sig_loc + 1]
-        ce[j] = processed["differences"][-1]
-    return sig_wl, ce, idler_wl
+def sort_by_pump_nm_difference(paths):
+    def nm_difference(path):
+        numbers = re.findall(r"(\d+.\d+)nm", path)
+        return abs(float(numbers[-1]) - float(numbers[-2]))
+
+    return sorted(paths, key=nm_difference)
+
+
+def extract_pump_wls(s):
+    numbers = re.findall(r"\d+\.\d+", s)
+    numbers = [float(num) for num in numbers]
+    numbers = numbers[-2:]
+    numbers.sort()
+    return numbers
+
+
+def get_subdirectories(directory):
+    return [
+        d for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))
+    ]
