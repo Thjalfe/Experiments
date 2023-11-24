@@ -88,7 +88,7 @@ def process_ce_data_for_pump_sweep_around_opt(
             ando1_wls_tmp = ando1_wls[pump_wl_pair_idx]
             spectra = np.array(data[pump_wl_pair]["spectra"][dc])
             for rep in range(num_reps):
-                for i, wl1 in enumerate(ando1_wls_tmp):
+                for i in ando1_wls_tmp:
                     spectra_sgl_rep = spectra[i, :, rep]
                     spectra_sgl_rep = np.transpose(spectra_sgl_rep, (0, 2, 1))
                     (

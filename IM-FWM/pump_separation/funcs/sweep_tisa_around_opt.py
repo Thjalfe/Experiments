@@ -105,8 +105,10 @@ def set_auto_pol_opt_and_back_to_normal_settings(
     return idler_power
 
 
-def move_tisa_until_no_hysteresis(stepsize: float, tisa: TiSapphire, osa: OSA):
-    print("Moving TISA until no hysteresis...")
+def move_tisa_until_no_hysteresis(
+    stepsize: float, tisa: TiSapphire, osa: OSA, logger: logging.Logger
+):
+    logging_message(logger, "Moving TISA until no hysteresis...")
     osa.sweeptype = "SGL"
     osa.sweep()
     wavelengths = osa.wavelengths
@@ -120,7 +122,7 @@ def move_tisa_until_no_hysteresis(stepsize: float, tisa: TiSapphire, osa: OSA):
         tisa_loc = wavelengths[np.argmax(powers)]
         tisa_loc_diff = tisa_loc - tisa_loc_prev
         if tisa_loc_diff > stepsize / 2:
-            print("No longer hysteresis...")
+            logging_message(logger, "No longer hysteresis")
             break
 
 
@@ -129,7 +131,7 @@ def sweep_tisa_w_dutycycle(
     stepsize: float,
     num_steps: int,
     idler_side: str,
-    pump_wls: np.ndarray,
+    idler_loc: str,
     duty_cycles: List[float],
     osa_params: dict,
     num_sweep_reps: int,
@@ -137,11 +139,10 @@ def sweep_tisa_w_dutycycle(
     osa: OSA,
     pico: PicoScope2000a,
     pulse_freq: float,
-    logger: logging.Logger = None,
+    logger: logging.Logger,
 ):
     def init_tisa_sweep(
         start_wl: float,
-        pump_wls: np.ndarray,
         stepsize: float,
         idler_side: str,
         osa_params: dict,
@@ -157,7 +158,6 @@ def sweep_tisa_w_dutycycle(
         osa.resolution = osa_params["res"]
         osa.sensitivity = osa_params["sens"]
         move_tisa_until_no_hysteresis(stepsize, tisa, osa)
-        idler_loc = calculate_approx_idler_loc(start_wl, pump_wls, idler_side)
         if idler_side == "red":
             osa_span = (start_wl - 1, idler_loc + 1)
             osa.span = osa_span
@@ -168,7 +168,7 @@ def sweep_tisa_w_dutycycle(
 
     def init_no_tisa_sweep(
         center_wl: float,
-        pump_wls: np.ndarray,
+        idler_loc: float,
         idler_side: str,
         osa_params: dict,
         osa: OSA,
@@ -176,7 +176,6 @@ def sweep_tisa_w_dutycycle(
         logging_message(logger, "Initializing no TISA sweep...")
         osa.resolution = osa_params["res"]
         osa.sensitivity = osa_params["sens"]
-        idler_loc = calculate_approx_idler_loc(center_wl, pump_wls, idler_side)
         if idler_side == "red":
             osa_span = (center_wl - 1, idler_loc + 1)
             osa.span = osa_span
@@ -187,13 +186,17 @@ def sweep_tisa_w_dutycycle(
 
     if num_steps > 0:
         # If 0, then only the tisa point from linear fit will be measured
-        init_tisa_sweep(
-            start_tisa_wl, pump_wls, stepsize, idler_side, osa_params, tisa, osa
-        )
+        init_tisa_sweep(start_tisa_wl, stepsize, idler_side, osa_params, tisa, osa)
     else:
         # stupid solution to avoid having to rewrite the code,
         # just set the tisa to the linear fit point
-        init_no_tisa_sweep(start_tisa_wl, pump_wls, idler_side, osa_params, tisa, osa)
+        init_no_tisa_sweep(
+            start_tisa_wl,
+            idler_loc,
+            idler_side,
+            osa_params,
+            osa,
+        )
         num_steps = 1
     spectrum_dict = {dc: [] for dc in duty_cycles}
     for i in range(num_steps):
@@ -219,7 +222,6 @@ def sweep_tisa_w_dutycycle(
 def sweep_w_pol_opt_based_on_linear_fit(
     params: dict,
     osa_params: dict,
-    num_pump_steps: int,
     pump_laser1: Laser,
     pump_laser2: Laser,
     verdi: VerdiLaser,
@@ -238,17 +240,17 @@ def sweep_w_pol_opt_based_on_linear_fit(
     logging_message(logger, f"Starting sweep at {datetime.datetime.now()}")
     data_pump_wl_dict = {pump_wl: {} for pump_wl in params["pump_wl_list"]}
     data_pump_wl_dict["params"] = params
-    for pump_wl_idx in range(num_pump_steps):
-        ando1_wl = params["pump_wl_list"][pump_wl_idx][0]
-        ando2_wl = params["pump_wl_list"][pump_wl_idx][1]
+    for pump_wl_idx in range(len(params["pump_wl_list"])):
+        pump1_wl = params["pump_wl_list"][pump_wl_idx][0]
+        pump2_wl = params["pump_wl_list"][pump_wl_idx][1]
         logging_message(
             logger, f"Starting sweep for pump wls {params['pump_wl_list'][pump_wl_idx]}"
         )
-        pump_laser1.wavelength = params["pump_wl_list"][pump_wl_idx][0]
-        pump_laser2.wavelength = params["pump_wl_list"][pump_wl_idx][1]
+        pump_laser1.wavelength = pump1_wl
+        pump_laser2.wavelength = pump2_wl
         pump_wl_diff = np.abs(pump_laser1.wavelength - pump_laser2.wavelength)
         center_wl = params["phase_match_fit"](pump_wl_diff)
-        tisa_wl = params["phase_match_fit"](np.abs(ando1_wl - ando2_wl))
+        tisa_wl = params["phase_match_fit"](np.abs(pump1_wl - pump2_wl))
         idler_wl_approx = calculate_approx_idler_loc(
             tisa_wl, params["pump_wl_list"][pump_wl_idx], "red"
         )
@@ -269,7 +271,6 @@ def sweep_w_pol_opt_based_on_linear_fit(
             pol_opt_dc=params["pol_opt_dc"],
         )
         logging_message(logger, "Pol opt done!")
-        osa.sweep()
         osa.sweep()
         tisa_pow = np.max(osa.powers)
         osa.set_power_marker(3, tisa_pow)
@@ -298,13 +299,14 @@ def sweep_w_pol_opt_based_on_linear_fit(
             params["tisa_stepsize"],
             params["num_tisa_steps"],
             params["idler_side"],
-            np.array(params["pump_wl_list"][pump_wl_idx]),
+            idler_wl_approx,
             params["duty_cycles"],
             params["osa_params"],
             params["num_sweep_reps"],
             tisa,
             osa,
             pico,
+            logger,
         )
         logging_message(
             logger,

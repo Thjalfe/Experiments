@@ -83,7 +83,6 @@ def set_manual_pol_opt_and_back_to_normal_settings(
 def sweep_w_pol_opt_based_on_linear_fit(
     params: dict,
     osa_params: dict,
-    num_pump_steps: int,
     pump_laser1: Laser,
     pump_laser2: Laser,
     verdi: VerdiLaser,
@@ -102,7 +101,7 @@ def sweep_w_pol_opt_based_on_linear_fit(
     )
     logging_message(logger, f"Starting sweep at {datetime.datetime.now()}")
     pump_wl_list = params["pump_wl_list"]
-    for pump_wl_idx in range(num_pump_steps):
+    for pump_wl_idx in range(len(params["pump_wl_list"])):
         logging_message(
             logger, f"Starting sweep for pump wls {pump_wl_list[pump_wl_idx]}"
         )
