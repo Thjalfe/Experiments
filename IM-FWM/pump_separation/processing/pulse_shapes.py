@@ -21,7 +21,7 @@ if not os.path.exists(fig_path):
     os.makedirs(fig_path)
 save_figs = False
 freqs = list(pump_data.keys())
-#|%%--%%| <rKfmAIqGIa|Ioj6lFLhNs>
+# |%%--%%| <rKfmAIqGIa|Ioj6lFLhNs>
 freq_idx = 3
 for freq_idx in range(len(freqs)):
     freq = freqs[freq_idx]
@@ -225,12 +225,14 @@ ax.set_ylabel("Voltage (mV)")
 ax.legend()
 if save_figs:
     fig.savefig(f"{fig_path}mean_sig_idler_pulses.pdf", bbox_inches="tight")
-#|%%--%%| <Fk7XujLiPM|gq11egzJkJ>
+# |%%--%%| <Fk7XujLiPM|gq11egzJkJ>
 mean_pulse_idler_normalized = mean_pulse_idler / np.max(mean_pulse_idler)
 std_pulse_idler_normalized = std_pulse_idler / np.max(mean_pulse_idler)
 mean_pulse_idler_normalized_rolling = rolling_average(mean_pulse_idler_normalized, 3)
 std_pulse_idler_normalized_rolling = rolling_average(std_pulse_idler_normalized, 3)
-pump_voltage_normalized_idxs = pump_voltage_normalized[pulse_starts_pump[1] - 5000: pulse_starts_pump[1] + 10000]
+pump_voltage_normalized_idxs = pump_voltage_normalized[
+    pulse_starts_pump[1] - 5000 : pulse_starts_pump[1] + 10000
+]
 pump_voltage_normalized_idxs_rolling = rolling_average(pump_voltage_normalized_idxs, 3)
 plt.rcParams["figure.figsize"] = (16, 14)
 plt.ioff()
@@ -250,18 +252,35 @@ ax.set_xlabel(r"Time ($\mu$s)")
 ax.set_ylabel("Voltage (a.u.)")
 ax.legend()
 if save_figs:
-    fig.savefig(f"{fig_path}mean_pump_idler_pulses_normalized_w_std.pdf", bbox_inches="tight")
-    fig.savefig("../../../../papers/cleo_us_2023/figs/mean_pump_idler_pulses_normalized_w_std.pdf", bbox_inches="tight")
+    fig.savefig(
+        f"{fig_path}mean_pump_idler_pulses_normalized_w_std.pdf", bbox_inches="tight"
+    )
+    fig.savefig(
+        "../../../../papers/cleo_us_2023/figs/mean_pump_idler_pulses_normalized_w_std.pdf",
+        bbox_inches="tight",
+    )
 freq_idx = 3
 freq = freqs[freq_idx]
 sub_data = pump_data[freq]
+plt.ion()
+colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+
+with open("../data/scope_traces/freq_and_cycle_vary.pkl", "rb") as f:
+    data = pickle.load(f)
+# |%%--%%| <kmVhiYHnNW|t2yhxHMzWr>
+freqs = list(data.keys())
+freq_idx = 0
+freq = freqs[freq_idx]
+sub_data = data[freq]
 duty_cycles = np.array(sub_data["duty_cycle"])
 time_ref = np.array(sub_data["time_ax_ref"])
 voltage_ref = np.array(sub_data["voltage_ref"])
 time = np.array(sub_data["time_ax"])
 voltage = np.array(sub_data["voltage"])
 new_voltage = voltage[0]
-new_voltage[pulse_starts_pump[0]: pulse_ends_pump[0]] = voltage[0][pulse_starts_pump[1]: pulse_ends_pump[1] + 1]
+new_voltage[pulse_starts_pump[0] : pulse_ends_pump[0]] = voltage[0][
+    pulse_starts_pump[1] : pulse_ends_pump[1] + 1
+]
 norm_factor = np.max(new_voltage)
 fig, ax = plt.subplots()
 for i, duty_cycle in enumerate(duty_cycles):
@@ -277,17 +296,20 @@ for i, duty_cycle in enumerate(duty_cycles):
     # ax.set_title(f"Frequency={freq}, Duty Cycle: {duty_cycle}")
     ax.legend(title="Duty Cycle")
 if save_figs:
+    fig.savefig(f"{fig_path}rep_rate_{freq}_diff_duty_cycles.pdf", bbox_inches="tight")
     fig.savefig(
-        f"{fig_path}rep_rate_{freq}_diff_duty_cycles.pdf", bbox_inches="tight"
+        "../../../../papers/cleo_us_2023/figs/rep_rate_100KHz_diff_duty_cycles.pdf",
+        bbox_inches="tight",
     )
-    fig.savefig("../../../../papers/cleo_us_2023/figs/rep_rate_100KHz_diff_duty_cycles.pdf", bbox_inches="tight")
-#|%%--%%| <gq11egzJkJ|le08kchA0b>
+# |%%--%%| <gq11egzJkJ|le08kchA0b>
 #### 2x1 subplot of the plots above
 mean_pulse_idler_normalized = mean_pulse_idler / np.max(mean_pulse_idler)
 std_pulse_idler_normalized = std_pulse_idler / np.max(mean_pulse_idler)
 mean_pulse_idler_normalized_rolling = rolling_average(mean_pulse_idler_normalized, 3)
 std_pulse_idler_normalized_rolling = rolling_average(std_pulse_idler_normalized, 3)
-pump_voltage_normalized_idxs = pump_voltage_normalized[pulse_starts_pump[1] - 5000: pulse_starts_pump[1] + 10000]
+pump_voltage_normalized_idxs = pump_voltage_normalized[
+    pulse_starts_pump[1] - 5000 : pulse_starts_pump[1] + 10000
+]
 pump_voltage_normalized_idxs_rolling = rolling_average(pump_voltage_normalized_idxs, 3)
 plt.rcParams["figure.figsize"] = (16, 6)
 plt.rcParams["legend.fontsize"] = 30
@@ -296,9 +318,32 @@ plt.rcParams["xtick.labelsize"] = 35
 plt.rcParams["ytick.labelsize"] = 35
 plt.rcParams["legend.title_fontsize"] = 35
 
+fig, ax = plt.subplots()
+for i, duty_cycle in enumerate(duty_cycles):
+    # ax1 = ax.twinx()
+    # ax1.plot(time_ref[i], voltage_ref[i], label='Reference')
+    ax.plot(time[i] * 10**6, voltage[i] * 10**3, label=f"{duty_cycle*100:.0f}%")
+    ax.set_xlabel(r"Time ($\mu$s)")
+    ax.set_ylabel("Voltage (mV)")
+    ax.set_title(f"Frequency={freq}")
+    ax.legend()
+# |%%--%%| <t2yhxHMzWr|9AR6e6CFKs>
+freq_idx = 0
+freq = freqs[freq_idx]
+sub_data = data[freq]
+duty_cycles = np.array(sub_data["duty_cycle"])
+time_ref = np.array(sub_data["time_ax_ref"])
+voltage_ref = np.array(sub_data["voltage_ref"])
+time = np.array(sub_data["time_ax"])
+voltage = np.array(sub_data["voltage"])
+
 plt.ioff()
 fig, ax = plt.subplots(1, 2, sharey=True)
-ax[1].plot(time_ax_idler * 10**6, mean_pulse_idler_normalized, label=r"Norm.(P$_{\mathrm{idler}}$)")
+ax[1].plot(
+    time_ax_idler * 10**6,
+    mean_pulse_idler_normalized,
+    label=r"Norm.(P$_{\mathrm{idler}}$)",
+)
 # ax[0].plot(time_ax_idler * 10**6, mean_pulse_idler_normalized_rolling, label="Idler")
 # ax[1].fill_between(
 #     time_ax_idler * 10**6,
@@ -306,7 +351,11 @@ ax[1].plot(time_ax_idler * 10**6, mean_pulse_idler_normalized, label=r"Norm.(P$_
 #     mean_pulse_idler_normalized + std_pulse_idler_normalized,
 #     alpha=0.5,
 # )
-ax[1].plot(time_ax_pump * 10**6, pump_voltage_normalized_idxs**2, label=r"Norm.(P$_{\mathrm{pump}})^2$")
+ax[1].plot(
+    time_ax_pump * 10**6,
+    pump_voltage_normalized_idxs**2,
+    label=r"Norm.(P$_{\mathrm{pump}})^2$",
+)
 # ax[0].plot(time_ax_pump * 10**6, pump_voltage_normalized_idxs_rolling**2, label=r"Pump$^2$ Rolling")
 ax[1].set_xlim(-0.1, 1.1)
 ax[1].set_xlabel(r"Time ($\mu$s)")
@@ -322,7 +371,9 @@ voltage_ref = np.array(sub_data["voltage_ref"])
 time = np.array(sub_data["time_ax"])
 voltage = np.array(sub_data["voltage"])
 new_voltage = voltage[0]
-new_voltage[pulse_starts_pump[0]: pulse_ends_pump[0]] = voltage[0][pulse_starts_pump[1]: pulse_ends_pump[1] + 1]
+new_voltage[pulse_starts_pump[0] : pulse_ends_pump[0]] = voltage[0][
+    pulse_starts_pump[1] : pulse_ends_pump[1] + 1
+]
 norm_factor = np.max(new_voltage)
 for i, duty_cycle in enumerate(duty_cycles):
     if duty_cycle == 0.75 or duty_cycle == 0.25:
@@ -342,10 +393,10 @@ ax[0].spines["top"].set_visible(True)
 ax[1].spines["top"].set_visible(True)
 fig.tight_layout()
 if save_figs:
+    fig.savefig(f"{fig_path}trace_subplot", bbox_inches="tight")
     fig.savefig(
-        f"{fig_path}trace_subplot", bbox_inches="tight"
+        "../../../../papers/cleo_us_2023/figs/trace_subplot.pdf", bbox_inches="tight"
     )
-    fig.savefig("../../../../papers/cleo_us_2023/figs/trace_subplot.pdf", bbox_inches="tight")
 # |%%--%%| <le08kchA0b|7DvGxzPBgL>
 
 fig, ax = plt.subplots()
@@ -410,3 +461,11 @@ voltage_pulses_only_idler, time_ax_idler, mean_len_idler = get_pulse_windows(
 )
 mean_pulse_idler = np.mean(voltage_pulses_only_idler, axis=0)
 std_pulse_idler = np.std(voltage_pulses_only_idler, axis=0)
+fig, ax = plt.subplots()
+# ax1 = ax.twinx()
+# ax1.plot(time_ref[i], voltage_ref[i], label='Reference')
+ax.plot(time[i] * 10**6, voltage[i] * 10**3)
+ax.set_xlabel(r"Time ($\mu$s)")
+ax.set_ylabel("Voltage (mV)")
+ax.set_title(f"Frequency={freq}, Duty Cycle: {duty_cycle}")
+ax.legend()

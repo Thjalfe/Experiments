@@ -8,8 +8,10 @@ import numpy as np
 
 current_file_path = os.path.abspath(".py")
 current_file_dir = os.path.dirname(current_file_path)
+
 project_root_dir = os.path.join(current_file_dir, "..", "..")
 sys.path.append(os.path.normpath(project_root_dir))
+import scipy.stats as stats
 from pump_separation.funcs.utils import (
     calculate_differences,
     return_filtered_peaks,
@@ -268,7 +270,6 @@ leg = ax.legend(title="Duty cycle", loc="upper right")
 if save_figs:
     fig.savefig(fig_path + "ce_diff_vs_pump_sep.pdf", bbox_inches="tight")
 # |%%--%%| <AshiPwhVfw|T5Q2zxtJ4A>
-import scipy.stats as stats
 
 max_osci_vals = np.zeros((len(osci_data), len(duty_cycles_max)))
 for i, sub_osci in enumerate(osci_data):
