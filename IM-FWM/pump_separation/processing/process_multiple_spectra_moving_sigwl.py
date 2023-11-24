@@ -1,4 +1,5 @@
 import os
+import glob
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,7 +8,12 @@ current_file_path = os.path.abspath(".py")
 current_file_dir = os.path.dirname(current_file_path)
 project_root_dir = os.path.join(current_file_dir, "..", "..")
 sys.path.append(os.path.normpath(project_root_dir))
-from pump_separation.funcs.utils import process_single_dataset, sort_by_pump_nm_difference, extract_pump_wls, get_subdirectories  # noqa: E402
+from pump_separation.funcs.utils import (
+    process_single_dataset,
+    sort_by_pump_nm_difference,
+    extract_pump_wls,
+    get_subdirectories,
+)  # noqa: E402
 
 plt.style.use("custom")
 plt.ion()
@@ -32,7 +38,13 @@ data_folders = sort_by_pump_nm_difference(data_folders)
 file_type = "csv"
 
 
-def extract_sig_wl_and_ce(
+def sort_file_names_by_filenumber(data_folder):
+    all_files = glob.glob(data_folder + "*." + file_type)
+    all_files.sort(key=lambda x: int(x.split("_")[-1].split(".")[0]))
+    return all_files
+
+
+def extract_sig_wl_and_ce_multiple_spectra(
     data,
     pump_lst,
     num_files,
@@ -75,14 +87,30 @@ for folder in data_folders:
 
 for idx, raw_data_specific_pump_sep in enumerate(raw_data):
     pumps = pump_lst[idx]
-    sig_wl_tmp, ce_tmp, idler_wl_tmp = extract_sig_wl_and_ce(
+    sig_wl_tmp, ce_tmp, idler_wl_tmp = extract_sig_wl_and_ce_multiple_spectra(
         raw_data_specific_pump_sep, pumps, np.shape(raw_data_specific_pump_sep)[0]
     )
     sig_wl.append(sig_wl_tmp)
     ce.append(ce_tmp)
     idler_wl.append(idler_wl_tmp)
 pump_seps = [np.max(pump) - np.min(pump) for pump in pump_lst]
-# |%%--%%| <WKcyLA34wv|sIg8wX78ou>
+# |%%--%%| <CIbwDB3Rgu|bZb4R9CCs4>
+# test section for setting up lab scripts
+# first create the datastructure that I expect to use in lab
+raw_data = {}
+iter = 0
+for folder in data_folders:
+    all_files = sort_file_names_by_filenumber(folder)
+    pumps = extract_pump_wls(folder)
+    dataset = np.array([np.loadtxt(f, delimiter=",") for f in all_files])
+    pump_lst.append(pumps)
+    if iter not in raw_data:
+        raw_data[iter] = {}
+    raw_data[iter]["spectra"] = dataset
+    raw_data[iter]["pump_wls"] = pumps
+    iter += 1
+
+# |%%--%%| <WKcyLA34wv|CIbwDB3Rgu>
 # Section for the changing sig wavelength
 
 fig, ax = plt.subplots()
@@ -103,7 +131,7 @@ if save_figs:
         bbox_inches="tight",
     )
 
-# |%%--%%| <t2wRldNr8Z|ixhrTmMszv>
+# |%%--%%| <bZb4R9CCs4|ixhrTmMszv>
 # Maximum conversion efficiency vs pump wavelength difference
 max_ce_arr = np.zeros(len(ce))
 for i, ce_tmp in enumerate(ce):
@@ -144,7 +172,7 @@ if save_figs:
         bbox_inches="tight",
     )
 
-
+np.savetxt("fit_C_plus_L_band_phase_matching_pumpwl_mean=1570.csv", fit, delimiter=",")
 # |%%--%%| <prIElLNxjr|5Q2vPtv8ep>
 def nm_diff_at_sig_wl(p1_wl, p2_wl, s_wl=970):
     i_wl = 1 / (1 / p1_wl - 1 / p2_wl + 1 / s_wl)
