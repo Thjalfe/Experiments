@@ -2,7 +2,7 @@ import numpy as np
 import time
 import os
 import pickle
-from osa_control import OSA
+from sa_control import OSA
 from picoscope2000 import PicoScope2000a
 from pol_cons import optimize_multiple_pol_cons, PolCon
 from arduino_pm import ArduinoADC
@@ -160,7 +160,7 @@ def sweep_w_pol_opt_based_on_linear_fit(
         osa.set_power_marker(4, idler_power)
         logging_message(
             logger,
-            f"CE after pol opt for pump wls {pump_wl_list} is: {tisa_pow - idler_power}",
+            f"CE after pol opt for pump wls {pump_wl_list[pump_wl_idx]} is: {tisa_pow - idler_power}",
         )
         if idler_power < -55:
             logging_message(logger, "Idler power too low, a pump must be off", "error")
@@ -190,7 +190,9 @@ def sweep_w_pol_opt_based_on_linear_fit(
             "wl_idx",
         ]
         osa.samples = num_samples
-        logging_message(logger, f"Starting sweep for pump wls {pump_wl_list}...")
+        logging_message(
+            logger, f"Starting sweep for pump wls {pump_wl_list[pump_wl_idx]}..."
+        )
         for i in range(params["num_sweep_reps"]):
             if i > 0:
                 pump_laser1.wavelength = ando1_wl

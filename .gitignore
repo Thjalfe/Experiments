@@ -10,3 +10,11 @@ IM-FWM/refactored_code/funcs/.jukit
 IM-FWM/refactored_code/funcs/__pycache__
 IM-FWM/refactored_code
 IM-FWM/pump_separation/processing/ref_oscilloscope.csv
+IM-FWM/distant_bs/data
+IM-FWM/distant_bs/processing/.jukit
+IM-FWM/pump_separation/funcs/.jukit
+IM-FWM/pump_separation/processing/__pycache__
+IM-FWM/pump_separation/processing/c_plus_l_band_cleo/.jukit
+IM-FWM/pump_separation/processing/c_plus_l_band_cleo/__pycache__/cleo_help_funcs.cpython-311.pyc
+IM-FWM/pump_separation/processing/c_plus_l_band_cleo/pump_spec.pkl
+IM-FWM/pump_separation/processing/c_plus_l_band_cleo/__pycache__

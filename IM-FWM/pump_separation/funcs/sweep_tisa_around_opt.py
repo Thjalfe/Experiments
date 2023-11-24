@@ -1,4 +1,6 @@
 import numpy as np
+import logging
+import datetime
 import pickle
 import os
 from typing import List, Optional
@@ -22,7 +24,7 @@ def calculate_approx_idler_loc(tisa_wl: float, pump_wls: np.ndarray, idler_side:
         raise ValueError("idler_side must be either 'red' or 'blue'")
 
 
-def optimize_pump_pols_at_tisa_wl(
+def optimize_pump_pols_at_tisa_wl_and_return_idler_pow(
     tisa_wl: float,
     pump_wls: np.ndarray,
     idler_side: str,
@@ -33,7 +35,7 @@ def optimize_pump_pols_at_tisa_wl(
     max_or_min: str = "max",
     tolerance: float = 0.2,
 ):
-    def check_idler_power(osa: OSA, min_idler_power: float = -50):
+    def return_idler_power(osa: OSA):
         """
         For the osa to give reliable power output to the arduino, it seems that
         the osa power must be above a certain threshold which seems to be about
@@ -46,10 +48,7 @@ def optimize_pump_pols_at_tisa_wl(
         osa.stop_sweep()
         osa.update_spectrum()
         max_power = np.max(osa.powers)
-        if max_power < min_idler_power:
-            return False
-        else:
-            return True
+        return max_power
 
     tisa.set_wavelength_iterative_method(tisa_wl, osa, error_tolerance=0.05)
     idler_loc = calculate_approx_idler_loc(tisa_wl, pump_wls, idler_side)
@@ -62,12 +61,7 @@ def optimize_pump_pols_at_tisa_wl(
     osa.sensitivity = "SMID"
     osa.span = idler_loc
     osa.sweeptype = "RPT"
-    reliable_idler_pow_for_pol_opt = "Idler power large enough for pol optimization"
-    if check_idler_power(osa):
-        print("Idler power too small for pol optimization")
-        reliable_idler_pow_for_pol_opt = (
-            "WARNING: Idler power too small for reliable pol optimization"
-        )
+    idler_power = return_idler_power(osa)
     osa.sweep()
     optimize_multiple_pol_cons(
         arduino,
@@ -78,7 +72,37 @@ def optimize_pump_pols_at_tisa_wl(
     osa.resolution = osa_params_before_opt["res"]
     osa.sensitivity = osa_params_before_opt["sen"]
     osa.sweeptype = osa_params_before_opt["sweeptype"]
-    return reliable_idler_pow_for_pol_opt
+    return idler_power
+
+
+def set_auto_pol_opt_and_back_to_normal_settings(
+    osa: OSA,
+    picoscope: PicoScope2000a,
+    idler_wl: float,
+    osa_params: dict,
+    span_before: tuple,
+    pol_con1: PolCon,
+    pol_con2: PolCon,
+    arduino: ArduinoADC,
+    pulse_freq: float,
+    pol_opt_dc: float = 0.1,
+):
+    picoscope.awg.set_square_wave_duty_cycle(pulse_freq, pol_opt_dc)
+    osa.samples = 0  # set to auto
+    osa.span = idler_wl
+    osa.sweeptype = "RPT"
+    osa.resolution = 0.5
+    print(f"Setting span to {idler_wl}")
+    osa.sweep()
+    optimize_multiple_pol_cons(arduino, pol_con1, pol_con2, tolerance=0.5)
+    osa.stop_sweep()
+    osa.resolution = osa_params["res"]
+    osa.sensitivity = osa_params["sens"]
+    osa.span = span_before
+    osa.sweeptype = "SGL"
+    osa.update_spectrum()
+    idler_power = np.max(osa.powers)
+    return idler_power
 
 
 def move_tisa_until_no_hysteresis(stepsize: float, tisa: TiSapphire, osa: OSA):
@@ -113,6 +137,7 @@ def sweep_tisa_w_dutycycle(
     osa: OSA,
     pico: PicoScope2000a,
     pulse_freq: float,
+    logger: logging.Logger = None,
 ):
     def init_tisa_sweep(
         start_wl: float,
@@ -123,7 +148,7 @@ def sweep_tisa_w_dutycycle(
         tisa: TiSapphire,
         osa: OSA,
     ):
-        print("Initializing TISA sweep...")
+        logging_message(logger, "Initializing TISA sweep...")
         # -1*stepsize due to the hysterisis of the tisa
         tisa.set_wavelength_iterative_method(
             start_wl - stepsize, osa, error_tolerance=0.05
@@ -139,7 +164,7 @@ def sweep_tisa_w_dutycycle(
         elif idler_side == "blue":
             osa_span = (idler_loc - 1, start_wl + 1)
             osa.span = osa_span
-        print("TISA sweep initialized")
+        logging_message(logger, "TISA sweep initialized")
 
     def init_no_tisa_sweep(
         center_wl: float,
@@ -148,7 +173,7 @@ def sweep_tisa_w_dutycycle(
         osa_params: dict,
         osa: OSA,
     ):
-        print("Initializing no TISA sweep...")
+        logging_message(logger, "Initializing no TISA sweep...")
         osa.resolution = osa_params["res"]
         osa.sensitivity = osa_params["sens"]
         idler_loc = calculate_approx_idler_loc(center_wl, pump_wls, idler_side)
@@ -158,7 +183,7 @@ def sweep_tisa_w_dutycycle(
         elif idler_side == "blue":
             osa_span = (idler_loc - 1, center_wl + 1)
             osa.span = osa_span
-        print("OSA initialized for no TISA sweep meas")
+        logging_message(logger, "No TISA sweep initialized")
 
     if num_steps > 0:
         # If 0, then only the tisa point from linear fit will be measured
@@ -172,7 +197,8 @@ def sweep_tisa_w_dutycycle(
         num_steps = 1
     spectrum_dict = {dc: [] for dc in duty_cycles}
     for i in range(num_steps):
-        for i_dc, dc in enumerate(duty_cycles):
+        logging_message(logger, f"Starting TiSa sweep {i+1}/{num_steps}...")
+        for dc in duty_cycles:
             sweeps_for_dc = (
                 []
             )  # This will store the sweeps for a given dc for all repetitions
@@ -186,7 +212,7 @@ def sweep_tisa_w_dutycycle(
             spectrum_dict[dc].append(sweeps_for_dc)
         tisa.delta_wl_nm(stepsize)
         osa.span = (osa.span[0] + stepsize, osa.span[1] + stepsize)
-        print(f"TiSa sweep {i+1}/{num_steps} complete")
+        logging_message(logger, f"TiSa sweep {i+1}/{num_steps} done!")
     return spectrum_dict
 
 
@@ -206,25 +232,66 @@ def sweep_w_pol_opt_based_on_linear_fit(
     data_folder: str,
     ipg_edfa: Optional[IPGEDFA] = None,
 ):
+    logger = setup_logging(
+        data_folder, "log.log", [pump_laser1, pump_laser2], verdi, [ipg_edfa]
+    )
+    logging_message(logger, f"Starting sweep at {datetime.datetime.now()}")
     data_pump_wl_dict = {pump_wl: {} for pump_wl in params["pump_wl_list"]}
     data_pump_wl_dict["params"] = params
     for pump_wl_idx in range(num_pump_steps):
+        ando1_wl = params["pump_wl_list"][pump_wl_idx][0]
+        ando2_wl = params["pump_wl_list"][pump_wl_idx][1]
+        logging_message(
+            logger, f"Starting sweep for pump wls {params['pump_wl_list'][pump_wl_idx]}"
+        )
         pump_laser1.wavelength = params["pump_wl_list"][pump_wl_idx][0]
         pump_laser2.wavelength = params["pump_wl_list"][pump_wl_idx][1]
         pump_wl_diff = np.abs(pump_laser1.wavelength - pump_laser2.wavelength)
         center_wl = params["phase_match_fit"](pump_wl_diff)
-        # Setting to 0.1 duty cycle to make sure the idler power is large enough for optimization
-        # maybe later try to to optimize pol for each duty cycle
-        pico.awg.set_square_wave_duty_cycle(params["pulse_freq"], 0.1)
-        _ = optimize_pump_pols_at_tisa_wl(
-            center_wl,
-            params["pump_wl_list"][pump_wl_idx],
-            params["idler_side"],
-            tisa,
+        tisa_wl = params["phase_match_fit"](np.abs(ando1_wl - ando2_wl))
+        idler_wl_approx = calculate_approx_idler_loc(
+            tisa_wl, params["pump_wl_list"][pump_wl_idx], "red"
+        )
+        logging_message(
+            f"Setting tisa and idler wl to {tisa_wl} and {idler_wl_approx} nm"
+        )
+        tisa_span = (tisa_wl - 1, idler_wl_approx + 1)
+        tisa.set_wavelength_iterative_method(tisa_wl, osa, error_tolerance=0.05)
+        idler_power = set_auto_pol_opt_and_back_to_normal_settings(
             osa,
-            arduino,
+            pico,
+            idler_wl_approx,
+            osa_params,
+            tisa_span,
             pol_con1,
             pol_con2,
+            arduino,
+            pol_opt_dc=params["pol_opt_dc"],
+        )
+        logging_message(logger, "Pol opt done!")
+        osa.sweep()
+        osa.sweep()
+        tisa_pow = np.max(osa.powers)
+        osa.set_power_marker(3, tisa_pow)
+        osa.set_power_marker(4, idler_power)
+        logging_message(
+            logger,
+            f"CE after pol opt for pump wls {params['pump_wl_list'][pump_wl_idx]} is: {tisa_pow - idler_power}",
+        )
+        if idler_power < -55:
+            logging_message(logger, "Idler power too low, a pump must be off", "error")
+
+        tisa_span_len = tisa_span[1] - tisa_span[0]
+        num_samples = int(tisa_span_len / osa.resolution) * params["sampling_ratio"]
+        if num_samples % 2 == 0:
+            num_samples += 1
+        if params["sampling_ratio"] == 0:
+            num_samples = len(osa.wavelengths)
+        osa.samples = num_samples
+
+        logging_message(
+            logger,
+            f"Starting TiSa sweep for pump wls {params['pump_wl_list'][pump_wl_idx]}...",
         )
         spectra = sweep_tisa_w_dutycycle(
             center_wl - params["tisa_dist_either_side_of_peak"],
@@ -238,6 +305,10 @@ def sweep_w_pol_opt_based_on_linear_fit(
             tisa,
             osa,
             pico,
+        )
+        logging_message(
+            logger,
+            f"TiSa sweep for pump wls {params['pump_wl_list'][pump_wl_idx]} done!",
         )
         data_to_save = {
             "spectra": spectra,
