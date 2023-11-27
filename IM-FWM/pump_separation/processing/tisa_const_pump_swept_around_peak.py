@@ -1,4 +1,4 @@
-from pump_separation.processing.c_plus_l_band_cleo.cleo_help_funcs import (
+from pump_separation.funcs.process_multiple_spectra_sorted_in_dicts import (
     process_ce_data_for_pump_sweep_around_opt,
 )
 from matplotlib.ticker import MaxNLocator
@@ -13,12 +13,14 @@ plt.rcParams["figure.figsize"] = (16, 11)
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 plt.ion()
 
-data_loc_c_sweep = (
-    "../../data/C_plus_L_band/cleo/pol_opt_auto/c_pump_sweep/merged_data.pkl"
-)
-data_loc_l_sweep = "../../data/C_plus_L_band/cleo/pol_opt_auto/l_pump_sweep/second_time/merged_data.pkl"
+data_loc_c_sweep = "../data/sweep_multiple_separations_w_polopt/pol_opt_auto/mean_p_wl_1570nm/c_pump_sweep/first_session/merged_data.pkl"
+data_loc_l_sweep = "../data/sweep_multiple_separations_w_polopt/pol_opt_auto/mean_p_wl_1570nm/l_pump_sweep/first_session/merged_data.pkl"
+with open(data_loc_c_sweep, "rb") as f:
+    data_c_sweep = pickle.load(f)
+with open(data_loc_l_sweep, "rb") as f:
+    data_l_sweep = pickle.load(f)
 
-fig_folder = "../../figs/C_plus_L_band/cleo_us_2023/pol_opt_auto"
+fig_folder = "../../figs/sweep_multiple_separations_w_polopt/cleo_us_2023/pol_opt_auto"
 if not os.path.exists(fig_folder):
     os.makedirs(fig_folder)
 
@@ -37,7 +39,7 @@ merge_data = False
     ce_dict_std_c,
     ce_dict_best_for_each_ando_sweep_c,
     ce_dict_best_loc_for_each_ando_sweep_c,
-) = process_ce_data_for_pump_sweep_around_opt(data_loc_c_sweep, np.mean)
+) = process_ce_data_for_pump_sweep_around_opt(data_c_sweep, np.mean)
 
 (
     exp_params_l,
@@ -50,7 +52,7 @@ merge_data = False
     ce_dict_std_l,
     ce_dict_best_for_each_ando_sweep_l,
     ce_dict_best_loc_for_each_ando_sweep_l,
-) = process_ce_data_for_pump_sweep_around_opt(data_loc_l_sweep, np.mean)
+) = process_ce_data_for_pump_sweep_around_opt(data_l_sweep, np.mean)
 
 
 def merge_c_l_dicts(
@@ -401,7 +403,7 @@ slopes = np.diff(max_ce_vs_pumpsep_local - ce_offset) / np.diff(
 ### Plotting spectra
 plt.rcParams["figure.figsize"] = (16, 6)
 plt.ioff()
-pump_spec_loc = "../../data/C_plus_L_band/cleo/pump_spectra.pkl"
+pump_spec_loc = "../../data/sweep_multiple_separations_w_polopt/cleo/pump_spectra.pkl"
 with open(pump_spec_loc, "rb") as f:
     pump_spec = pickle.load(f)
 pump_spec = pump_spec[(1607, 1533)]

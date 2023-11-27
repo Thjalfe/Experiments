@@ -1,4 +1,4 @@
-from funcs.utils import extract_sig_wl_and_ce_multiple_spectra
+from pump_separation.funcs.utils import extract_sig_wl_and_ce_multiple_spectra
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -6,25 +6,77 @@ import pickle
 
 plt.style.use("custom")
 plt.rcParams["figure.figsize"] = (16, 11)
-plt.ion()
+plt.ioff()
 
-data_loc = "../../data/C_plus_L_band/cleo/pol_opt_not_working/data.pkl"
-# data_loc = "../data/C_plus_L_band/cleo/old_linear_fit_from_v_old_c_plus_l/data.pkl"
+data_loc = "../data/sweep_multiple_separations_w_polopt/cleo/manual/tisa_set_to_lin_fit/merged_data.pkl"
+data_loc = "../data/tisa_sweep_to_find_opt/pump_wl_mean_1590/merged_data.pkl"
+# data_loc = "../data/sweep_multiple_separations_w_polopt/cleo/old_linear_fit_from_v_old_c_plus_l/data.pkl"
 with open(data_loc, "rb") as f:
     data = pickle.load(f)
 
-fig_folder = "../../figs/C_plus_L_band/cleo_us_2023/pol_con_not_used"
+fig_folder = (
+    "../../figs/sweep_multiple_separations_w_polopt/cleo_us_2023/pol_con_not_used"
+)
 if not os.path.exists(fig_folder):
     os.makedirs(fig_folder)
 
 save_figs = False
 save_spectra = False
-# |%%--%%| <UuOjEq2SDJ|zj1zyrM71V>
 
-pump_wl_pairs = list(data.keys())[:-1]
-duty_cycles = data["params"]["duty_cycles"]
+
+# |%%--%%| <wN0skk86EQ|PuEp92P5VV>
+from typing import List
+
+
+def get_ce_and_locs_from_spectra(
+    spectra: dict, pump_wl_pair: tuple, num_reps: int, duty_cycles: List[float]
+):
+    idler_wl_2d = [[] for _ in duty_cycles]
+    sig_wl_2d = [[] for _ in duty_cycles]
+    ce_2d = [[] for _ in duty_cycles]
+    for dc_idx, dc in enumerate(duty_cycles):
+        idler_wl_lst = []
+        sig_wl_lst = []
+        ce_lst = []
+        spectra_for_dc = spectra[dc]
+        for rep in range(num_reps):
+            if len(np.shape(spectra_for_dc)) == 4:
+                spectra_sgl_rep = np.transpose(spectra_for_dc[rep], (0, 2, 1))
+            else:
+                spectra_sgl_rep = np.transpose(spectra_for_dc, (0, 2, 1))
+            sig_wl_tmp, ce_tmp, idler_wl_tmp = extract_sig_wl_and_ce_multiple_spectra(
+                spectra_sgl_rep, list(pump_wl_pair), np.shape(spectra_sgl_rep)[0]
+            )  # The dimension that is being returned over is the tisa sweep across opt
+            ce_lst.append(-ce_tmp)
+            sig_wl_lst.append(sig_wl_tmp)
+            idler_wl_lst.append(idler_wl_tmp)
+        ce_lst = np.mean(ce_lst, axis=0)
+        sig_wl_lst = np.mean(sig_wl_lst, axis=0)
+        idler_wl_lst = np.mean(idler_wl_lst, axis=0)
+        idler_wl_2d[dc_idx] = idler_wl_lst
+        sig_wl_2d[dc_idx] = sig_wl_lst
+        ce_2d[dc_idx] = ce_lst
+    ce_mean_all_dcs = np.mean(ce_2d, axis=0)
+    sig_wl_mean_all_dcs = np.mean(sig_wl_2d, axis=0)
+    idler_wl_mean_all_dcs = np.mean(idler_wl_2d, axis=0)
+    ce_max = np.max(ce_mean_all_dcs)
+    ce_max_idx = np.argmax(ce_mean_all_dcs)
+    sig_wl_max = sig_wl_mean_all_dcs[ce_max_idx]
+    idler_wl_max = idler_wl_mean_all_dcs[ce_max_idx]
+    return ce_max, sig_wl_max, idler_wl_max
+
+
+ce_max, sig_wl_max, idler_wl_max = get_ce_and_locs_from_spectra(
+    data[(1591, 1589)]["spectra"], (1591, 1589), 1, [0.2]
+)
+
+# |%%--%%| <PuEp92P5VV|zj1zyrM71V>
+
+pump_wl_pairs = list(data.keys())
+
+duty_cycles = data[pump_wl_pairs[0]]["params"]["duty_cycles"]
 pump_sep_ax = np.array([np.abs(pair[1] - pair[0]) for pair in pump_wl_pairs])
-num_reps = data["params"]["num_sweep_reps"]
+num_reps = data[pump_wl_pairs[0]]["params"]["num_sweep_reps"]
 ce_dict = {
     pump_wl_pair: {dc: [] for dc in duty_cycles} for pump_wl_pair in pump_wl_pairs
 }
@@ -34,25 +86,25 @@ sig_wl_dict = {
 idler_wl_dict = {
     pump_wl_pair: {dc: [] for dc in duty_cycles} for pump_wl_pair in pump_wl_pairs
 }
+process_method = np.mean
 for pump_wl_pair in pump_wl_pairs:
     for dc in duty_cycles:
         spectra = np.array(data[pump_wl_pair]["spectra"][dc])
-        if num_reps > 1:
-            spectra = np.transpose(spectra, (1, 0, 2, 3))
         for rep in range(num_reps):
-            if num_reps > 1:
-                spectra_sgl_rep = np.transpose(spectra[rep], (0, 2, 1))
-            else:
-                spectra_sgl_rep = np.transpose(spectra, (0, 2, 1))
+            if len(np.shape(spectra)) == 3:
+                spectra = np.expand_dims(spectra, axis=0)
+            spectra_sgl_rep = np.transpose(spectra[rep], (0, 2, 1))
             sig_wl_tmp, ce_tmp, idler_wl_tmp = extract_sig_wl_and_ce_multiple_spectra(
                 spectra_sgl_rep, list(pump_wl_pair), np.shape(spectra_sgl_rep)[0]
             )  # The dimension that is being returned over is the tisa sweep across opt
             ce_dict[pump_wl_pair][dc].append(-ce_tmp)
             sig_wl_dict[pump_wl_pair][dc].append(sig_wl_tmp)
             idler_wl_dict[pump_wl_pair][dc].append(idler_wl_tmp)
-        ce_dict[pump_wl_pair][dc] = np.median(ce_dict[pump_wl_pair][dc], axis=0)
-        sig_wl_dict[pump_wl_pair][dc] = np.median(sig_wl_dict[pump_wl_pair][dc], axis=0)
-        idler_wl_dict[pump_wl_pair][dc] = np.median(
+        ce_dict[pump_wl_pair][dc] = process_method(ce_dict[pump_wl_pair][dc], axis=0)
+        sig_wl_dict[pump_wl_pair][dc] = process_method(
+            sig_wl_dict[pump_wl_pair][dc], axis=0
+        )
+        idler_wl_dict[pump_wl_pair][dc] = process_method(
             idler_wl_dict[pump_wl_pair][dc], axis=0
         )
 sig_wl_at_max_ce = np.zeros((len(duty_cycles), len(pump_wl_pairs)))
@@ -77,9 +129,7 @@ if save_spectra:
                 ax.plot(spectra[idx, i, 0, :], spectra[idx, i, 1, :])
                 ax.set_xlabel("Wavelength (nm)")
                 ax.set_ylabel("Power (dBm)")
-                dir = os.path.join(
-                    fig_folder, f"spectra/pump_wl_pair={pump_wl_pair}"
-                )
+                dir = os.path.join(fig_folder, f"spectra/pump_wl_pair={pump_wl_pair}")
                 if not os.path.exists(dir):
                     os.makedirs(dir)
                 fig.savefig(
@@ -90,7 +140,7 @@ if save_spectra:
                     bbox_inches="tight",
                 )
     plt.ion()
-#|%%--%%| <HYw7Wi7LKs|VgSaNZXPa6>
+# |%%--%%| <HYw7Wi7LKs|VgSaNZXPa6>
 # Specific spectrum to be used
 pump_wl_idx = -1
 pump_wl_pair = pump_wl_pairs[pump_wl_idx]
@@ -152,7 +202,10 @@ ax.set_ylabel(r"$\eta$ (dB)")
 ax.legend(title="Duty Cycle")
 if save_figs:
     fig.savefig(os.path.join(fig_folder, "max_ce_vs_pumpsep.pdf"), bbox_inches="tight")
-    fig.savefig("../../../../../papers/cleo_us_2023/figs/max_ce_vs_pumpsep.pdf", bbox_inches="tight")
+    fig.savefig(
+        "../../../../../papers/cleo_us_2023/figs/max_ce_vs_pumpsep.pdf",
+        bbox_inches="tight",
+    )
 # |%%--%%| <hjzGaspXAv|o0ZNR7Dx1u>
 fig, ax = plt.subplots()
 for dc_idx, dc in enumerate(duty_cycles):
@@ -176,4 +229,4 @@ if save_figs:
         os.path.join(fig_folder, "mean_sig_wl_at_max_ce_vs_pumpsep.pdf"),
         bbox_inches="tight",
     )
-# np.savetxt("./fits/C_plus_L_band/linear_fit_v2.txt", linear_fit)
+# np.savetxt("./fits/sweep_multiple_separations_w_polopt/linear_fit_v2.txt", linear_fit)

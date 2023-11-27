@@ -18,8 +18,10 @@ def lin_to_dB(lin):
     return 10 * np.log10(lin)
 
 
-pump_data_loc = "../../data/C_plus_L_band/cleo/pump_powers.pkl"
-pump_data_loc = "../../data/C_plus_L_band/cleo/pump_powers_after_FMF.pkl"
+pump_data_loc = "../../data/sweep_multiple_separations_w_polopt/cleo/pump_powers.pkl"
+pump_data_loc = (
+    "../../data/sweep_multiple_separations_w_polopt/cleo/pump_powers_after_FMF.pkl"
+)
 with open(pump_data_loc, "rb") as f:
     pump_data = pickle.load(f)
 
@@ -31,7 +33,7 @@ stats_df = sheet_2_df.groupby("# Wavelength [nm]")["conversion eff"].agg(
 stats_df_dB = sheet_2_df.groupby("# Wavelength [nm]")[" Cross talk [dB]"].agg(
     ["mean", "std"]
 )
-fig_dir = "../../figs/C_plus_L_band/cleo_us_2023/pump_powers/"
+fig_dir = "../../figs/sweep_multiple_separations_w_polopt/cleo_us_2023/pump_powers/"
 if not os.path.exists(fig_dir):
     os.makedirs(fig_dir)
 save_figs = False
@@ -98,7 +100,9 @@ if save_figs:
     fig.savefig(f"{fig_dir}lpg_cross_talk.pdf", bbox_inches="tight")
 # |%%--%%| <9jdEEKTbjH|2swx2uFoNK>
 ## Pump power correction in correct mode etc
-fmf_loss = 0.19 * 0.9  # data from http://www.fp7-cosign.eu/wp-content/uploads/2015/09/COSIGN-deliverable-D2-3-submitted_final_v4.pdf with 900 m fiber
+fmf_loss = (
+    0.19 * 0.9
+)  # data from http://www.fp7-cosign.eu/wp-content/uploads/2015/09/COSIGN-deliverable-D2-3-submitted_final_v4.pdf with 900 m fiber
 fit_lpg = np.polyfit(stats_df.index[1:], stats_df["mean"][1:], 6)
 eval_lpg = np.poly1d(fit_lpg)
 fig, ax = plt.subplots()
@@ -141,18 +145,18 @@ for duty_cycle in merged_data.keys():
     p_c_band_corrected[duty_cycle][:, 1] *= eval_lpg(
         p_c_band_corrected[duty_cycle][:, 0]
     )
-    p_total_corrected[duty_cycle] = p_l_band_corrected[duty_cycle][6:-1, 1] + p_c_band_corrected[duty_cycle][:, 1]
+    p_total_corrected[duty_cycle] = (
+        p_l_band_corrected[duty_cycle][6:-1, 1] + p_c_band_corrected[duty_cycle][:, 1]
+    )
     p_c_band_corrected[duty_cycle][:, 1] = lin_to_dB(
         p_c_band_corrected[duty_cycle][:, 1]
     )
     p_l_band_corrected[duty_cycle][:, 1] = lin_to_dB(
         p_l_band_corrected[duty_cycle][:, 1]
     )
-    p_total_corrected[duty_cycle] = lin_to_dB(
-        p_total_corrected[duty_cycle]
-    )
+    p_total_corrected[duty_cycle] = lin_to_dB(p_total_corrected[duty_cycle])
 
-#|%%--%%| <2swx2uFoNK|KljMpJat7P>
+# |%%--%%| <2swx2uFoNK|KljMpJat7P>
 fig, ax = plt.subplots()
 for duty_cycle in p_merged_corrected.keys():
     ax.plot(

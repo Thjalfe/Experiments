@@ -19,12 +19,12 @@ plt.style.use("custom")
 plt.ion()
 
 # l_band_ce = np.loadtxt('./ce_vs_pumpsep_50duty_Lband_only.csv')
-fig_path = "../figs/C_plus_L_band/mean_p_wl_1570/"
+fig_path = "../figs/sweep_multiple_separations_w_polopt/mean_p_wl_1570/"
 save_figs = False
 if not os.path.exists(fig_path):
     os.makedirs(fig_path)
 
-upper_folder = "../data/C_plus_L_band/mean_p_wl_1570/"
+upper_folder = "../data/sweep_multiple_separations_w_polopt/mean_p_wl_1570/"
 data_folders = get_subdirectories(upper_folder)
 data_folders = [os.path.join(upper_folder, folder) for folder in data_folders]
 for i, data_folder in enumerate(data_folders):
@@ -172,7 +172,11 @@ if save_figs:
         bbox_inches="tight",
     )
 
-np.savetxt("fit_C_plus_L_band_phase_matching_pumpwl_mean=1570.csv", fit, delimiter=",")
+np.savetxt(
+    "fit_sweep_multiple_separations_w_polopt_phase_matching_pumpwl_mean=1570.csv",
+    fit,
+    delimiter=",",
+)
 
 
 # |%%--%%| <prIElLNxjr|5Q2vPtv8ep>
@@ -201,12 +205,12 @@ plt.style.use("custom")
 plt.ion()
 
 # l_band_ce = np.loadtxt('./ce_vs_pumpsep_50duty_Lband_only.csv')
-fig_path = "../figs/C_plus_L_band/mean_p_wl_1570/"
+fig_path = "../figs/sweep_multiple_separations_w_polopt/mean_p_wl_1570/"
 save_figs = False
 if not os.path.exists(fig_path):
     os.makedirs(fig_path)
 
-upper_folder = "../data/C_plus_L_band/mean_p_wl_1570/"
+upper_folder = "../data/sweep_multiple_separations_w_polopt/mean_p_wl_1570/"
 data_folders = get_subdirectories(upper_folder)
 data_folders = [os.path.join(upper_folder, folder) for folder in data_folders]
 for i, data_folder in enumerate(data_folders):

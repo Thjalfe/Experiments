@@ -1,14 +1,10 @@
 import numpy as np
-import pickle
 from pump_separation.funcs.utils import extract_sig_wl_and_ce_multiple_spectra
 
 
 def process_ce_data_for_pump_sweep_around_opt(
-    datafile_loc: str, data_process_method: callable
+    data: dict, data_process_method: callable
 ):
-    with open(datafile_loc, "rb") as f:
-        data = pickle.load(f)
-
     pump_wl_pairs = list(data.keys())
     duty_cycles = data[pump_wl_pairs[0]]["params"]["duty_cycles"]
     ando1_wls = []
@@ -88,8 +84,8 @@ def process_ce_data_for_pump_sweep_around_opt(
             ando1_wls_tmp = ando1_wls[pump_wl_pair_idx]
             spectra = np.array(data[pump_wl_pair]["spectra"][dc])
             for rep in range(num_reps):
-                for i in ando1_wls_tmp:
-                    spectra_sgl_rep = spectra[i, :, rep]
+                for idx_wl1 in range(len(ando1_wls_tmp)):
+                    spectra_sgl_rep = spectra[idx_wl1, :, rep]
                     spectra_sgl_rep = np.transpose(spectra_sgl_rep, (0, 2, 1))
                     (
                         sig_wl_tmp,
@@ -100,22 +96,26 @@ def process_ce_data_for_pump_sweep_around_opt(
                         list(pump_wl_pair),
                         np.shape(spectra_sgl_rep)[0],
                     )
-                    ce_dict[pump_wl_pair][dc][rep, i, :] = -ce_tmp
-                    sig_wl_dict[pump_wl_pair][dc][rep, i, :] = sig_wl_tmp
-                    idler_wl_dict[pump_wl_pair][dc][rep, i, :] = idler_wl_tmp
-                    ce_dict_processed[pump_wl_pair][dc][i, :] = data_process_method(
-                        ce_dict[pump_wl_pair][dc][:, i, :], axis=0
+                    ce_dict[pump_wl_pair][dc][rep, idx_wl1, :] = -ce_tmp
+                    sig_wl_dict[pump_wl_pair][dc][rep, idx_wl1, :] = sig_wl_tmp
+                    idler_wl_dict[pump_wl_pair][dc][rep, idx_wl1, :] = idler_wl_tmp
+                    ce_dict_processed[pump_wl_pair][dc][
+                        idx_wl1, :
+                    ] = data_process_method(
+                        ce_dict[pump_wl_pair][dc][:, idx_wl1, :], axis=0
                     )
-                    ce_dict_std[pump_wl_pair][dc][i, :] = np.std(
-                        ce_dict[pump_wl_pair][dc][:, i, :], axis=0
+                    ce_dict_std[pump_wl_pair][dc][idx_wl1, :] = np.std(
+                        ce_dict[pump_wl_pair][dc][:, idx_wl1, :], axis=0
                     )
-                    sig_wl_dict_processed[pump_wl_pair][dc][i, :] = data_process_method(
-                        sig_wl_dict[pump_wl_pair][dc][:, i, :], axis=0
+                    sig_wl_dict_processed[pump_wl_pair][dc][
+                        idx_wl1, :
+                    ] = data_process_method(
+                        sig_wl_dict[pump_wl_pair][dc][:, idx_wl1, :], axis=0
                     )
                     idler_wl_dict_processed[pump_wl_pair][dc][
-                        i, :
+                        idx_wl1, :
                     ] = data_process_method(
-                        idler_wl_dict[pump_wl_pair][dc][:, i, :], axis=0
+                        idler_wl_dict[pump_wl_pair][dc][:, idx_wl1, :], axis=0
                     )
             ce_dict_best_for_each_ando_sweep[pump_wl_pair][dc] = np.max(
                 np.squeeze(ce_dict_processed[pump_wl_pair][dc]), axis=0

@@ -25,29 +25,40 @@ def calculate_approx_idler_loc(tisa_wl: float, pump_wls: np.ndarray, idler_side:
 
 
 def get_ce_and_locs_from_spectra(
-    spectra: np.ndarray, pump_wl_pair: tuple, num_reps: int
+    spectra: dict, pump_wl_pair: tuple, num_reps: int, duty_cycles: List[float]
 ):
-    idler_wl_lst = []
-    sig_wl_lst = []
-    ce_lst = []
-    for rep in range(num_reps):
-        if num_reps > 1:
-            spectra_sgl_rep = np.transpose(spectra[rep], (0, 2, 1))
-        else:
-            spectra_sgl_rep = np.transpose(spectra, (0, 2, 1))
-        sig_wl_tmp, ce_tmp, idler_wl_tmp = extract_sig_wl_and_ce_multiple_spectra(
-            spectra_sgl_rep, list(pump_wl_pair), np.shape(spectra_sgl_rep)[0]
-        )  # The dimension that is being returned over is the tisa sweep across opt
-        ce_lst.append(-ce_tmp)
-        sig_wl_lst.append(sig_wl_tmp)
-        idler_wl_lst.append(idler_wl_tmp)
-    ce_lst = np.median(ce_lst, axis=0)
-    sig_wl_lst = np.median(sig_wl_lst, axis=0)
-    idler_wl_lst = np.median(idler_wl_lst, axis=0)
-    ce_max = np.max(ce_lst)
-    ce_max_idx = np.argmax(ce_lst)
-    sig_wl_max = sig_wl_lst[ce_max_idx]
-    idler_wl_max = idler_wl_lst[ce_max_idx]
+    idler_wl_2d = [[] for _ in duty_cycles]
+    sig_wl_2d = [[] for _ in duty_cycles]
+    ce_2d = [[] for _ in duty_cycles]
+    for dc_idx, dc in enumerate(duty_cycles):
+        idler_wl_lst = []
+        sig_wl_lst = []
+        ce_lst = []
+        spectra_for_dc = spectra[dc]
+        for rep in range(num_reps):
+            if len(np.shape(spectra_for_dc)) == 4:
+                spectra_sgl_rep = np.transpose(spectra_for_dc[rep], (0, 2, 1))
+            else:
+                spectra_sgl_rep = np.transpose(spectra_for_dc, (0, 2, 1))
+            sig_wl_tmp, ce_tmp, idler_wl_tmp = extract_sig_wl_and_ce_multiple_spectra(
+                spectra_sgl_rep, list(pump_wl_pair), np.shape(spectra_sgl_rep)[0]
+            )  # The dimension that is being returned over is the tisa sweep across opt
+            ce_lst.append(-ce_tmp)
+            sig_wl_lst.append(sig_wl_tmp)
+            idler_wl_lst.append(idler_wl_tmp)
+        ce_lst = np.mean(ce_lst, axis=0)
+        sig_wl_lst = np.mean(sig_wl_lst, axis=0)
+        idler_wl_lst = np.mean(idler_wl_lst, axis=0)
+        idler_wl_2d[dc_idx] = idler_wl_lst
+        sig_wl_2d[dc_idx] = sig_wl_lst
+        ce_2d[dc_idx] = ce_lst
+    ce_mean_all_dcs = np.mean(ce_2d, axis=0)
+    sig_wl_mean_all_dcs = np.mean(sig_wl_2d, axis=0)
+    idler_wl_mean_all_dcs = np.mean(idler_wl_2d, axis=0)
+    ce_max = np.max(ce_mean_all_dcs)
+    ce_max_idx = np.argmax(ce_mean_all_dcs)
+    sig_wl_max = sig_wl_mean_all_dcs[ce_max_idx]
+    idler_wl_max = idler_wl_mean_all_dcs[ce_max_idx]
     return ce_max, sig_wl_max, idler_wl_max
 
 
@@ -78,10 +89,13 @@ def sweep_tisa(
     num_steps: int,
     idler_side: str,
     idler_loc: str,
+    duty_cycles: List[float],
     osa_params: dict,
     num_sweep_reps: int,
     tisa: TiSapphire,
     osa: OSA,
+    pico: PicoScope2000a,
+    pulse_freq: float,
     logger: logging.Logger,
 ):
     def init_tisa_sweep(
@@ -119,19 +133,25 @@ def sweep_tisa(
         tisa,
         osa,
     )
-    spectra = [[] for _ in range(num_sweep_reps)]
+    spectrum_dict = {dc: [] for dc in duty_cycles}
     for j in range(num_steps):
         logging_message(logger, f"Starting TiSa sweep {j+1}/{num_steps}...")
-        for i in range(num_sweep_reps):
-            osa.sweep()
-            wavelengths = osa.wavelengths
-            powers = osa.powers
-            spectrum = np.array([wavelengths, powers])
-            spectra[j].append(spectrum)
+        for dc in duty_cycles:
+            sweeps_for_dc = (
+                []
+            )  # This will store the sweeps for a given dc for all repetitions
+            pico.awg.set_square_wave_duty_cycle(pulse_freq, dc)
+            for i in range(num_sweep_reps):
+                osa.sweep()
+                wavelengths = osa.wavelengths
+                powers = osa.powers
+                spectrum = np.array([wavelengths, powers])
+                sweeps_for_dc.append(spectrum)
+            spectrum_dict[dc].append(sweeps_for_dc)
         tisa.delta_wl_nm(stepsize)
         osa.span = (osa.span[0] + stepsize, osa.span[1] + stepsize)
         logging_message(logger, f"TiSa sweep {i+1}/{num_steps} done!")
-    return np.array(spectra)
+    return spectrum_dict
 
 
 def sweep_tisa_multiple_pump_seps(
@@ -142,6 +162,7 @@ def sweep_tisa_multiple_pump_seps(
     verdi: VerdiLaser,
     tisa: TiSapphire,
     osa: OSA,
+    pico: PicoScope2000a,
     data_folder: str,
     ipg_edfa: Optional[IPGEDFA] = None,
 ):
@@ -186,10 +207,13 @@ def sweep_tisa_multiple_pump_seps(
             params["num_tisa_steps"],
             params["idler_side"],
             idler_wl_approx,
+            params["duty_cycles"],
             params["osa_params"],
             params["num_sweep_reps"],
             tisa,
             osa,
+            pico,
+            params["pulse_freq"],
             logger,
         )
         logging_message(
@@ -208,7 +232,7 @@ def sweep_tisa_multiple_pump_seps(
             logger,
             f"Saved data for pump wls {params['pump_wl_list'][pump_wl_idx]}",
         )
-        ce_max, sig_wl_max, idler_wl_max = get_ce_and_locs_from_spectra(
+        ce_max, sig_wl_max, _ = get_ce_and_locs_from_spectra(
             spectra, params["pump_wl_list"][pump_wl_idx], params["num_sweep_reps"]
         )
         logging_message(
