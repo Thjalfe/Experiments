@@ -2,7 +2,7 @@ import numpy as np
 import time
 import os
 import pickle
-from sa_control import OSA
+from osa_control import OSA
 from picoscope2000 import PicoScope2000a
 from pol_cons import optimize_multiple_pol_cons, PolCon
 from arduino_pm import ArduinoADC
