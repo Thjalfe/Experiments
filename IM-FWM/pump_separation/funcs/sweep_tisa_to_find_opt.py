@@ -134,14 +134,14 @@ def sweep_tisa(
         osa,
     )
     spectrum_dict = {dc: [] for dc in duty_cycles}
-    for j in range(num_steps):
-        logging_message(logger, f"Starting TiSa sweep {j+1}/{num_steps}...")
+    for i in range(num_steps):
+        logging_message(logger, f"Starting TiSa sweep {i+1}/{num_steps}...")
         for dc in duty_cycles:
             sweeps_for_dc = (
                 []
             )  # This will store the sweeps for a given dc for all repetitions
             pico.awg.set_square_wave_duty_cycle(pulse_freq, dc)
-            for i in range(num_sweep_reps):
+            for _ in range(num_sweep_reps):
                 osa.sweep()
                 wavelengths = osa.wavelengths
                 powers = osa.powers
