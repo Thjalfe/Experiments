@@ -119,11 +119,13 @@ def merge_c_l_dicts(
                 best_ce_slice_merged_tmp, axis=0
             )
             ce_dict_std[pump_wl_pair][dc] = np.std(best_ce_slice_merged_tmp, axis=0)
-            max_ce_vs_pumpsep[
-                dc_idx, pump_wl_pair_idx
-            ] = best_ce_slice_merged_tmp.mean()
+            max_ce_vs_pumpsep[dc_idx, pump_wl_pair_idx] = (
+                best_ce_slice_merged_tmp.mean()
+            )
+            max_ce_vs_pumpsep[dc_idx, pump_wl_pair_idx] = (
+                best_ce_slice_merged_tmp.mean()
+            )
             std_ce_vs_pumpsep[dc_idx, pump_wl_pair_idx] = best_ce_slice_merged_tmp.std()
-
     return (
         ce_dict,
         ce_dict_processed,
@@ -395,11 +397,90 @@ ax.plot(
 ax.set_xlabel("1 / Duty Cycle (dB)")
 ax.set_ylabel("CE (dB)")
 ax.legend()
+
+
+# |%%--%%| <nNII6cFZbQ|GDHAseigAh>
+def ce_increase_rel_to_cw(max_ce_pump_sep_local: np.ndarray, ce_offset: np.ndarray):
+    ce_increase = max_ce_pump_sep_local - ce_offset
+    ce_increase_rel_to_cw = ce_increase - ce_increase[0]
+    return ce_increase_rel_to_cw
+
+
+pump_sep_idx_local = 0
+ce_increase_rel_to_cw_all_pump_seps = np.zeros(
+    (len(exp_params_c["pump_sep_ax"]), len(ce_offset))
+)
+slope_all_pump_seps = np.zeros(len(exp_params_c["pump_sep_ax"]))
+slope_between_all_dc = np.zeros((len(exp_params_c["pump_sep_ax"]), len(ce_offset) - 1))
+for pump_sep_idx_local, pump_sep_local in enumerate(exp_params_c["pump_sep_ax"]):
+    max_ce_vs_pumpsep_local = max_ce_vs_pumpsep_l[::-1, pump_sep_idx_local]
+    ce_increase_rel_to_cw_local = ce_increase_rel_to_cw(
+        max_ce_vs_pumpsep_local, ce_offset
+    )
+    slope, intercept = np.polyfit(
+        10 * np.log10(inv_duty_cycles),
+        ce_increase_rel_to_cw_local,
+        1,
+    )
+    slope_between_all_dc[pump_sep_idx_local, :] = np.diff(
+        ce_increase_rel_to_cw_local
+    ) / np.diff(10 * np.log10(inv_duty_cycles))
+    ce_increase_rel_to_cw_all_pump_seps[pump_sep_idx_local, :] = (
+        ce_increase_rel_to_cw_local
+    )
+    slope_all_pump_seps[pump_sep_idx_local] = slope
+mean_ce_increase_rel_to_cw = np.mean(ce_increase_rel_to_cw_all_pump_seps, axis=0)
+std_ce_increase_rel_to_cw = np.std(ce_increase_rel_to_cw_all_pump_seps, axis=0)
+mean_slope = np.mean(slope_all_pump_seps)
+std_slope = np.std(slope_all_pump_seps)
+mean_slope_between_all_dc = np.mean(slope_between_all_dc, axis=0)
+std_slope_between_all_dc = np.std(slope_between_all_dc, axis=0)
+
+# |%%--%%| <GDHAseigAh|qlJab9gk88>
+fig, ax = plt.subplots()
+ax.plot(
+    inv_duty_cycles,
+    mean_ce_increase_rel_to_cw,
+    "o-",
+)
+ax.errorbar(
+    inv_duty_cycles,
+    mean_ce_increase_rel_to_cw,
+    std_ce_increase_rel_to_cw,
+    fmt="none",
+    capsize=6,
+)
+exp_x = np.linspace(1, 10)
+exp_y = 10 * np.log10(np.linspace(1, 10) ** 2)
+ax.plot(exp_x, exp_y, "--", label="expected")
+ax.set_xscale("log")
+for slope_segment, slope in enumerate(mean_slope_between_all_dc):
+    mid_x = (inv_duty_cycles[slope_segment] + inv_duty_cycles[slope_segment + 1]) / 2
+    mid_y = (
+        mean_ce_increase_rel_to_cw[slope_segment]
+        + mean_ce_increase_rel_to_cw[slope_segment + 1]
+    ) / 2
+    angle_deg = np.degrees(np.arctan(slope))
+    ax.text(
+        mid_x,
+        mid_y,
+        rf"{slope:.2f}$\pm${std_slope_between_all_dc[slope_segment]:.2f}",
+        fontsize=32,
+        ha="center",
+        va="top",
+        rotation=angle_deg,
+    )
+ax.set_xlabel("1 / Duty Cycle (dB)")
+ax.set_xticks(inv_duty_cycles)
+ax.set_xticklabels(1 / duty_cycle_arr_local)
+ax.set_ylabel("Relative CE (dB)")
+plt.show()
+# |%%--%%| <qlJab9gk88|NyyuKf2Lrg>
 # slope between each point
 slopes = np.diff(max_ce_vs_pumpsep_local - ce_offset) / np.diff(
     10 * np.log10(inv_duty_cycles)
 )
-# |%%--%%| <h8DS28sJyY|sUBJEyGu6O>
+# |%%--%%| <NyyuKf2Lrg|sUBJEyGu6O>
 ### Plotting spectra
 plt.rcParams["figure.figsize"] = (16, 6)
 plt.ioff()
