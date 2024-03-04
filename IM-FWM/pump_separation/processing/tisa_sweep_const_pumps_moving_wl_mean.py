@@ -152,7 +152,7 @@ for dc_idx, dc in enumerate(duty_cycles):
         short_pump_wl_ax,
         max_ce_vs_pumpsep[dc_idx, :] - ce_offset[dc_idx],
         "o-",
-        label=dc
+        label=dc,
         # pump_sep_ax, max_ce_vs_pumpsep[dc_idx, :], "o-", label=dc
     )
 ax_ticks = ax.get_xticks()

@@ -57,7 +57,9 @@ for freq_idx in range(len(freqs)):
     for i, duty_cycle in enumerate(duty_cycles):
         # ax1 = ax.twinx()
         # ax1.plot(time_ref[i], voltage_ref[i], label='Reference')
-        ax.plot(time[i] * 10**6, voltage[i] * 10**3, label=f"{duty_cycle*100:.0f}\%")
+        ax.plot(
+            time[i] * 10**6, voltage[i] * 10**3, label=f"{duty_cycle*100:.0f}\%"
+        )
     ax.set_xlabel(r"Time ($\mu$s)")
     ax.set_ylabel("Voltage (mV)")
     ax.set_title(f"Frequency={freq}")
@@ -161,7 +163,9 @@ idler_df = pd.DataFrame(
         "Voltage": voltage_values_normalized[shift_idler_idx:],
     }
 )
-pump_df = pd.DataFrame({"Time": pump_time * 10**6, "Voltage": pump_voltage_normalized})
+pump_df = pd.DataFrame(
+    {"Time": pump_time * 10**6, "Voltage": pump_voltage_normalized}
+)
 pd.concat([idler_df, pump_df], axis=1).to_csv("idler_pump_normalized.csv")
 # |%%--%%| <a0eHedtdST|Fk7XujLiPM>
 # Mean for idler
@@ -293,7 +297,7 @@ plt.ion()
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
 # |%%--%%| <huzw0xWwgH|TVqdy23dB9>
-with open("../data/scope_traces/freq_cycle_vary_pumps.pkl", "rb") as f:
+with open("../../data/scope_traces/freq_cycle_vary_pumps.pkl", "rb") as f:
     data = pickle.load(f)
 freqs = list(data.keys())
 freq_idx = 0

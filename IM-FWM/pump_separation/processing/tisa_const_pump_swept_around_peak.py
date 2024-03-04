@@ -470,7 +470,7 @@ for slope_segment, slope in enumerate(mean_slope_between_all_dc):
         va="top",
         rotation=angle_deg,
     )
-ax.set_xlabel("1 / Duty Cycle (dB)")
+ax.set_xlabel("1 / Duty Cycle relative to CW")
 ax.set_xticks(inv_duty_cycles)
 ax.set_xticklabels(1 / duty_cycle_arr_local)
 ax.set_ylabel("Relative CE (dB)")
