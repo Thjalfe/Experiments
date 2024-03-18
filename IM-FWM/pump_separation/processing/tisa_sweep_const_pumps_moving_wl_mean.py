@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import os
 import pickle
 
-# plt.style.use("custom")
+plt.style.use("custom")
 plt.rcParams["figure.figsize"] = (16, 11)
 plt.ioff()
 
@@ -15,13 +15,12 @@ data_loc = "../data/sweep_multiple_separations_w_polopt/pol_opt_auto/tisa_sweep_
 data_loc = (
     "../data/tisa_sweep_to_find_opt/moving_pump_mean/pump_wl_dist=10nm/merged_data.pkl"
 )
+data_loc = "../data/sweep_multiple_separations_w_polopt/pol_opt_auto/tisa_sweep_around_opt/moving_pumpwl_mean/pump_wl_dist=10.0nm/merged_data.pkl"
 # data_loc = "../data/sweep_multiple_separations_w_polopt/cleo/old_linear_fit_from_v_old_c_plus_l/data.pkl"
 with open(data_loc, "rb") as f:
     data = pickle.load(f)
 
-fig_folder = (
-    "../../figs/sweep_multiple_separations_w_polopt/cleo_us_2023/pol_con_not_used"
-)
+fig_folder = "../../figs/sweep_pumpwl_mean_const_pump_sep/10_nm"
 if not os.path.exists(fig_folder):
     os.makedirs(fig_folder)
 
@@ -153,23 +152,19 @@ for dc_idx, dc in enumerate(duty_cycles):
         short_pump_wl_ax,
         max_ce_vs_pumpsep[dc_idx, :] - ce_offset[dc_idx],
         "o-",
-        label=dc
+        label=dc,
         # pump_sep_ax, max_ce_vs_pumpsep[dc_idx, :], "o-", label=dc
     )
 ax_ticks = ax.get_xticks()
 ax2.set_xlim(mean_sig_wl_at_max_ce[0], mean_sig_wl_at_max_ce[-1])
 ax2.set_xlabel(r"$\lambda_s$ (nm)")
 ax2.grid(False)
-ax.set_xlabel("Pump Separation (nm)")
+ax.set_xlabel("Short Pump Wavelength (nm)")
 ax.set_ylabel(r"$\eta$ (dB)")
 # ax.set_title("Max CE vs Pump Separation")
 ax.legend(title="Duty Cycle")
 if save_figs:
     fig.savefig(os.path.join(fig_folder, "max_ce_vs_pumpsep.pdf"), bbox_inches="tight")
-    fig.savefig(
-        "../../../../../papers/cleo_us_2023/figs/max_ce_vs_pumpsep.pdf",
-        bbox_inches="tight",
-    )
 # |%%--%%| <hjzGaspXAv|o0ZNR7Dx1u>
 fig, ax = plt.subplots()
 for dc_idx, dc in enumerate(duty_cycles):
@@ -194,4 +189,4 @@ if save_figs:
         bbox_inches="tight",
     )
 # np.savetxt(f"./fits/mean_pumpwl_{mean_p_wl}nm.txt", linear_fit)
-np.savetxt(f"./fits/moving_pump_wl_dist_10nm.txt", linear_fit)
+# np.savetxt(f"./fits/moving_pump_wl_dist_10nm.txt", linear_fit)

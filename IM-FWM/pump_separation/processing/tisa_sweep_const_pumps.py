@@ -109,7 +109,7 @@ pump_wl_idx = 0
 pump_wl_pair = pump_wl_pairs[pump_wl_idx]
 dc_idx = 0
 dc = duty_cycles[dc_idx]
-rep_num = 6
+rep_num = 2
 spectra = np.array(data[pump_wl_pair]["spectra"][dc])
 idx = np.argmax(ce_dict[pump_wl_pair][dc])
 spectrum = spectra[rep_num, idx, :, :]
@@ -152,7 +152,7 @@ for dc_idx, dc in enumerate(duty_cycles):
         pump_sep_ax,
         max_ce_vs_pumpsep[dc_idx, :] - ce_offset[dc_idx],
         "o-",
-        label=dc
+        label=dc,
         # pump_sep_ax, max_ce_vs_pumpsep[dc_idx, :], "o-", label=dc
     )
 ax_ticks = ax.get_xticks()
@@ -169,7 +169,7 @@ if save_figs:
         "../../../../../papers/cleo_us_2023/figs/max_ce_vs_pumpsep.pdf",
         bbox_inches="tight",
     )
-# |%%--%%| <hjzGaspXAv|o0ZNR7Dx1u>
+# |%%--%%| <hjzGaspXAv|oj2EO72Fal>
 fig, ax = plt.subplots()
 for dc_idx, dc in enumerate(duty_cycles):
     ax.plot(pump_sep_ax, sig_wl_at_max_ce[dc_idx, :], "o-", label=dc)

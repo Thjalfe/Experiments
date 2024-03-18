@@ -5,6 +5,8 @@ import re
 import glob
 from collections import OrderedDict
 
+directory = "../data/sweep_multiple_separations_w_polopt/pol_opt_auto/tisa_sweep_around_opt/mean_p_wl=1590.0"
+# directory = "../data/sweep_multiple_separations_w_polopt/pol_opt_auto/tisa_sweep_around_opt/moving_pumpwl_mean/pump_wl_dist=10.0nm"
 directory = "../data/tisa_sweep_to_find_opt/moving_pump_mean/pump_wl_dist=10nm"
 files = glob.glob(f"{os.path.join(directory, '*.pkl')}")
 merged_data = {}

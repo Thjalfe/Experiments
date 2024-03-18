@@ -1,3 +1,4 @@
+*.jukit
 IM-FWM/pump_separation/funcs/experiment-Thjalfe-desktop.py
 IM-FWM/pump_separation/funcs/utils-Thjalfe-desktop.py
 IM-FWM/pump_separation/processing/.jukit
@@ -13,6 +14,7 @@ IM-FWM/pump_separation/processing/ref_oscilloscope.csv
 IM-FWM/distant_bs/data
 IM-FWM/distant_bs/processing/.jukit
 IM-FWM/pump_separation/funcs/.jukit
+IM-FWM/pump_separation/data
 IM-FWM/pump_separation/processing/__pycache__
 IM-FWM/pump_separation/processing/c_plus_l_band_cleo/.jukit
 IM-FWM/pump_separation/processing/c_plus_l_band_cleo/__pycache__/cleo_help_funcs.cpython-311.pyc
@@ -20,3 +22,13 @@ IM-FWM/pump_separation/processing/c_plus_l_band_cleo/pump_spec.pkl
 IM-FWM/pump_separation/processing/c_plus_l_band_cleo/__pycache__
 InstrumentControl/InstrumentControl
 pyrightconfig-Thjalfe-desktop.json
+IM-FWM/distant_bs/figs
+IM-FWM/figs/sweep_pumpwl_mean_const_pump_sep/10_nm
+IM-FWM/pump_separation/.jukit
+IM-FWM/pump_separation/__pycache__
+IM-FWM/pump_separation/figs
+IM-FWM/pump_separation/funcs/__pycache__
+IM-FWM/pump_separation/funcs/sweep_pumps_around_opt-Thjalfe-desktop.py
+IM-FWM/pump_separation/funcs/sweep_tisa_to_find_opt-Thjalfe-desktop.py
+InstrumentControl
+SM-FWM/spectra_tisa=998nm_c-band_sweep.pkl
