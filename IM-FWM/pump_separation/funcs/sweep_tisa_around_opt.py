@@ -3,7 +3,7 @@ import logging
 import datetime
 import pickle
 import os
-from typing import List, Optional
+from typing import List, Optional, Literal
 import time
 from osa_control import OSA
 from laser_control import TiSapphire, Laser
@@ -12,7 +12,7 @@ from picoscope2000 import PicoScope2000a
 from pol_cons import optimize_multiple_pol_cons, PolCon
 from arduino_pm import ArduinoADC
 from ipg_edfa import IPGEDFA
-from logging_utils import setup_logging, logging_message
+from pump_separation.funcs.logging_utils import setup_logging, logging_message
 
 
 def calculate_approx_idler_loc(tisa_wl: float, pump_wls: np.ndarray, idler_side: str):
@@ -157,7 +157,7 @@ def sweep_tisa_w_dutycycle(
         osa.span = (start_wl - 1, start_wl + 1)
         osa.resolution = osa_params["res"]
         osa.sensitivity = osa_params["sens"]
-        move_tisa_until_no_hysteresis(stepsize, tisa, osa)
+        move_tisa_until_no_hysteresis(stepsize, tisa, osa, logger)
         if idler_side == "red":
             osa_span = (start_wl - 1, idler_loc + 1)
             osa.span = osa_span
@@ -232,6 +232,7 @@ def sweep_w_pol_opt_based_on_linear_fit(
     pol_con2: Optional[PolCon],
     arduino: Optional[ArduinoADC],
     data_folder: str,
+    exp_type: Literal["const pump wl mean", "moving pump wl mean"],
     ipg_edfa: Optional[IPGEDFA] = None,
 ):
     logger = setup_logging(
@@ -248,14 +249,22 @@ def sweep_w_pol_opt_based_on_linear_fit(
         )
         pump_laser1.wavelength = pump1_wl
         pump_laser2.wavelength = pump2_wl
-        pump_wl_diff = np.abs(pump_laser1.wavelength - pump_laser2.wavelength)
-        center_wl = params["phase_match_fit"](pump_wl_diff)
-        tisa_wl = params["phase_match_fit"](np.abs(pump1_wl - pump2_wl))
+        if exp_type == "const pump wl mean":
+            pump_wl_diff = np.abs(pump_laser1.wavelength - pump_laser2.wavelength)
+            center_wl = params["phase_match_fit"](pump_wl_diff)
+            tisa_wl = params["phase_match_fit"](pump_wl_diff)
+        elif exp_type == "moving pump wl mean":
+            center_wl = params["phase_match_fit"](
+                np.min(params["pump_wl_list"][pump_wl_idx])
+            )
+            tisa_wl = params["phase_match_fit"](
+                np.min(params["pump_wl_list"][pump_wl_idx])
+            )
         idler_wl_approx = calculate_approx_idler_loc(
             tisa_wl, params["pump_wl_list"][pump_wl_idx], "red"
         )
         logging_message(
-            f"Setting tisa and idler wl to {tisa_wl} and {idler_wl_approx} nm"
+            logger, f"Setting tisa and idler wl to {tisa_wl} and {idler_wl_approx} nm"
         )
         tisa_span = (tisa_wl - 1, idler_wl_approx + 1)
         tisa.set_wavelength_iterative_method(tisa_wl, osa, error_tolerance=0.05)
@@ -268,6 +277,7 @@ def sweep_w_pol_opt_based_on_linear_fit(
             pol_con1,
             pol_con2,
             arduino,
+            params["pulse_freq"],
             pol_opt_dc=params["pol_opt_dc"],
         )
         logging_message(logger, "Pol opt done!")
@@ -306,6 +316,7 @@ def sweep_w_pol_opt_based_on_linear_fit(
             tisa,
             osa,
             pico,
+            params["pulse_freq"],
             logger,
         )
         logging_message(

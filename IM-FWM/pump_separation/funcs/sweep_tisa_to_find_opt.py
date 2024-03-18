@@ -11,7 +11,7 @@ from verdi_laser import VerdiLaser
 from picoscope2000 import PicoScope2000a
 from arduino_pm import ArduinoADC
 from ipg_edfa import IPGEDFA
-from logging_utils import setup_logging, logging_message
+from funcs.logging_utils import setup_logging, logging_message
 from funcs.utils import extract_sig_wl_and_ce_multiple_spectra
 
 
@@ -36,8 +36,16 @@ def get_ce_and_locs_from_spectra(
         ce_lst = []
         spectra_for_dc = spectra[dc]
         for rep in range(num_reps):
+            # Nasty hardcoded solutions due to shape of data has changed slightly
+            # for different iterations of script. Basically, just need to make
+            # sure that the shape is (num_reps, num_tisa_steps, num_wl_points, 2)
+            # for the extract_sig_wl_and_ce_multiple_spectra function to work
             if len(np.shape(spectra_for_dc)) == 4:
-                spectra_sgl_rep = np.transpose(spectra_for_dc[rep], (0, 2, 1))
+                if np.shape(spectra_for_dc)[0] != num_reps:
+                    spectra_for_dc = np.transpose(spectra_for_dc, (1, 0, 2, 3))
+                    spectra_sgl_rep = np.transpose(spectra_for_dc[rep], (0, 2, 1))
+                else:
+                    spectra_sgl_rep = np.transpose(spectra_for_dc[rep], (0, 2, 1))
             else:
                 spectra_sgl_rep = np.transpose(spectra_for_dc, (0, 2, 1))
             sig_wl_tmp, ce_tmp, idler_wl_tmp = extract_sig_wl_and_ce_multiple_spectra(
@@ -115,7 +123,7 @@ def sweep_tisa(
         osa.span = (start_wl - 1, start_wl + 1)
         osa.resolution = osa_params["res"]
         osa.sensitivity = osa_params["sens"]
-        move_tisa_until_no_hysteresis(stepsize, tisa, osa)
+        move_tisa_until_no_hysteresis(stepsize, tisa, osa, logger)
         if idler_side == "red":
             osa_span = (start_wl - 1, idler_loc + 1)
             osa.span = osa_span
@@ -167,7 +175,7 @@ def sweep_tisa_multiple_pump_seps(
     ipg_edfa: Optional[IPGEDFA] = None,
 ):
     logger = setup_logging(
-        data_folder, "log.log", [pump_laser1, pump_laser2, verdi, [ipg_edfa]]
+        data_folder, "log.log", [pump_laser1, pump_laser2], verdi, [ipg_edfa]
     )
     logging_message(logger, f"Starting sweep at {datetime.datetime.now()}")
     tisa_start_wl = params["start_wl"]
@@ -183,7 +191,8 @@ def sweep_tisa_multiple_pump_seps(
             tisa_start_wl, params["pump_wl_list"][pump_wl_idx], "red"
         )
         logging_message(
-            f"Setting tisa and idler wl to {tisa_start_wl} and {idler_wl_approx} nm"
+            logger,
+            f"Setting tisa and idler wl to {tisa_start_wl} and {idler_wl_approx} nm",
         )
         tisa_span = (tisa_start_wl - 1, idler_wl_approx + 1)
         # Error tolerance higher than normal, but for this function, we do not know the
@@ -232,8 +241,14 @@ def sweep_tisa_multiple_pump_seps(
             logger,
             f"Saved data for pump wls {params['pump_wl_list'][pump_wl_idx]}",
         )
+        if len(np.shape(spectra)) == 4:
+            if np.shape(spectra)[0] != params["num_sweep_reps"]:
+                spectra = np.transpose(spectra, (1, 0, 2, 3))
         ce_max, sig_wl_max, _ = get_ce_and_locs_from_spectra(
-            spectra, params["pump_wl_list"][pump_wl_idx], params["num_sweep_reps"]
+            spectra,
+            params["pump_wl_list"][pump_wl_idx],
+            params["num_sweep_reps"],
+            params["duty_cycles"],
         )
         logging_message(
             logger,

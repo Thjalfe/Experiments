@@ -11,7 +11,7 @@ from laser_control import Laser, TiSapphire
 from verdi_laser import VerdiLaser
 from ipg_edfa import IPGEDFA
 import datetime
-from logging_utils import setup_logging, logging_message
+from pump_separation.funcs.logging_utils import setup_logging, logging_message
 
 
 def calculate_approx_idler_loc(tisa_wl: float, pump_wls: np.ndarray, idler_side: str):
@@ -124,7 +124,7 @@ def sweep_w_pol_opt_based_on_linear_fit(
             tisa_wl, pump_wl_list[pump_wl_idx], "red"
         )
         logging_message(
-            f"Setting tisa and idler wl to {tisa_wl} and {idler_wl_approx} nm"
+            logger, f"Setting tisa and idler wl to {tisa_wl} and {idler_wl_approx} nm"
         )
         tisa_span = (tisa_wl - 1, idler_wl_approx + 1)
         pump_laser1.wavelength = ando1_wl
@@ -141,6 +141,7 @@ def sweep_w_pol_opt_based_on_linear_fit(
                 pol_con1,
                 pol_con2,
                 arduino,
+                params["pulse_freq"],
                 pol_opt_dc=params["pol_opt_dc"],
             )
             logging_message(logger, "Pol opt done!")
@@ -204,6 +205,8 @@ def sweep_w_pol_opt_based_on_linear_fit(
                         tisa_span,
                         pol_con1,
                         pol_con2,
+                        arduino,
+                        params["pulse_freq"],
                         pol_opt_dc=params["pol_opt_dc"],
                     )
                 elif pol_opt_method == "manual":

@@ -16,7 +16,7 @@ from laser_control import AndoLaser, TiSapphire
 from verdi_laser import VerdiLaser
 from amonics_edfa import EDFA
 from picoscope2000 import PicoScope2000a
-from thorlabs_mpc320 import ThorlabsMPC320, optimize_multiple_pol_cons
+from pol_cons import ThorlabsMPC320, optimize_multiple_pol_cons
 from arduino_pm import ArduinoADC
 from tektronix_oscilloscope import TektronixOscilloscope
 from ipg_edfa import IPGEDFA
