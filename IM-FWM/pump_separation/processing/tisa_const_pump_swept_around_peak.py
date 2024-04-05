@@ -1,15 +1,18 @@
-from pump_separation.funcs.process_multiple_spectra_sorted_in_dicts import (
-    process_ce_data_for_pump_sweep_around_opt,
-)
-from matplotlib.ticker import MaxNLocator
-
-import numpy as np
-import matplotlib.pyplot as plt
+# THIS IS THE MAIN DOCUMENT FOR
+# C PLUS L BAND SWEEPS
 import os
 import pickle
 
-plt.style.use("custom")
-plt.rcParams["figure.figsize"] = (16, 11)
+import matplotlib.pyplot as plt
+from curlyBrace import curlyBrace
+import numpy as np
+from matplotlib.ticker import MaxNLocator
+from pump_separation.funcs.process_multiple_spectra_sorted_in_dicts import (
+    process_ce_data_for_pump_sweep_around_opt,
+)
+
+plt.style.use("large_fonts")
+# plt.rcParams["figure.figsize"] = (16, 11)
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 plt.ion()
 
@@ -26,7 +29,7 @@ if not os.path.exists(fig_folder):
 
 save_figs = False
 save_spectra = False
-merge_data = False
+merge_data = True
 
 (
     exp_params_c,
@@ -406,13 +409,11 @@ def ce_increase_rel_to_cw(max_ce_pump_sep_local: np.ndarray, ce_offset: np.ndarr
     return ce_increase_rel_to_cw
 
 
-pump_sep_idx_local = 0
-ce_increase_rel_to_cw_all_pump_seps = np.zeros(
-    (len(exp_params_c["pump_sep_ax"]), len(ce_offset))
-)
-slope_all_pump_seps = np.zeros(len(exp_params_c["pump_sep_ax"]))
-slope_between_all_dc = np.zeros((len(exp_params_c["pump_sep_ax"]), len(ce_offset) - 1))
-for pump_sep_idx_local, pump_sep_local in enumerate(exp_params_c["pump_sep_ax"]):
+pump_sep_ax = exp_params_c["pump_sep_ax"]
+ce_increase_rel_to_cw_all_pump_seps = np.zeros((len(pump_sep_ax), len(ce_offset)))
+slope_all_pump_seps = np.zeros(len(pump_sep_ax))
+slope_between_all_dc = np.zeros((len(pump_sep_ax), len(ce_offset) - 1))
+for pump_sep_idx_local, pump_sep_local in enumerate(pump_sep_ax):
     max_ce_vs_pumpsep_local = max_ce_vs_pumpsep_l[::-1, pump_sep_idx_local]
     ce_increase_rel_to_cw_local = ce_increase_rel_to_cw(
         max_ce_vs_pumpsep_local, ce_offset
@@ -435,13 +436,15 @@ mean_slope = np.mean(slope_all_pump_seps)
 std_slope = np.std(slope_all_pump_seps)
 mean_slope_between_all_dc = np.mean(slope_between_all_dc, axis=0)
 std_slope_between_all_dc = np.std(slope_between_all_dc, axis=0)
-
 # |%%--%%| <GDHAseigAh|qlJab9gk88>
+fig_path = "/home/thjalfe/Documents/PhD/Projects/papers/cleo_us_2024/presentation/figs/setup_method"
+plt.style.use("large_fonts")
 fig, ax = plt.subplots()
 ax.plot(
     inv_duty_cycles,
     mean_ce_increase_rel_to_cw,
     "o-",
+    label="Actual CE",
 )
 ax.errorbar(
     inv_duty_cycles,
@@ -452,7 +455,7 @@ ax.errorbar(
 )
 exp_x = np.linspace(1, 10)
 exp_y = 10 * np.log10(np.linspace(1, 10) ** 2)
-ax.plot(exp_x, exp_y, "--", label="expected")
+ax.plot(exp_x, exp_y, "--", label=r"Expected, $P^2$")
 ax.set_xscale("log")
 for slope_segment, slope in enumerate(mean_slope_between_all_dc):
     mid_x = (inv_duty_cycles[slope_segment] + inv_duty_cycles[slope_segment + 1]) / 2
@@ -460,34 +463,39 @@ for slope_segment, slope in enumerate(mean_slope_between_all_dc):
         mean_ce_increase_rel_to_cw[slope_segment]
         + mean_ce_increase_rel_to_cw[slope_segment + 1]
     ) / 2
-    angle_deg = np.degrees(np.arctan(slope))
     ax.text(
         mid_x,
         mid_y,
-        rf"{slope:.2f}$\pm${std_slope_between_all_dc[slope_segment]:.2f}",
+        # rf"{slope:.2f}$\pm${std_slope_between_all_dc[slope_segment]:.2f}",
+        rf"{slope:.2f}",
         fontsize=32,
         ha="center",
         va="top",
-        rotation=angle_deg,
+        rotation=30,
     )
-ax.set_xlabel("1 / Duty Cycle relative to CW")
+ax.set_xlabel("1 / Duty Cycle")
+ax.legend()
 ax.set_xticks(inv_duty_cycles)
 ax.set_xticklabels(1 / duty_cycle_arr_local)
 ax.set_ylabel("Relative CE (dB)")
-plt.show()
+ax.yaxis.set_major_locator(MaxNLocator(nbins=5))
+ax.set_xlim([np.min(inv_duty_cycles) - 0.01, np.max(inv_duty_cycles) + 0.2])
+ax.set_ylim([-0.1, 20.1])
+fig.tight_layout()
+fig.savefig(os.path.join(fig_path, "ce_vs_dc_and_slopes.pdf"), bbox_inches="tight")
 # |%%--%%| <qlJab9gk88|NyyuKf2Lrg>
 # slope between each point
 slopes = np.diff(max_ce_vs_pumpsep_local - ce_offset) / np.diff(
     10 * np.log10(inv_duty_cycles)
 )
-# |%%--%%| <NyyuKf2Lrg|sUBJEyGu6O>
+# |%%--%%| <NyyuKf2Lrg|qfM8qhRNH9>
 ### Plotting spectra
 plt.rcParams["figure.figsize"] = (16, 6)
 plt.ioff()
-pump_spec_loc = "../../data/sweep_multiple_separations_w_polopt/cleo/pump_spectra.pkl"
+pump_spec_loc = "../data/sweep_multiple_separations_w_polopt/cleo/pump_spectra.pkl"
 with open(pump_spec_loc, "rb") as f:
-    pump_spec = pickle.load(f)
-pump_spec = pump_spec[(1607, 1533)]
+    pump_specs = pickle.load(f)
+pump_spec = pump_specs[(1607, 1533)]
 
 with open(data_loc_l_sweep, "rb") as f:
     data = pickle.load(f)
@@ -566,3 +574,122 @@ if save_figs:
     fig.savefig(
         "../../../../../papers/cleo_us_2023/figs/spectra.pdf", bbox_inches="tight"
     )
+# |%%--%%| <qfM8qhRNH9|isLdu8wn0K>
+plt.style.use("large_fonts")
+fig_loc = "/home/thjalfe/Documents/PhD/Projects/papers/cleo_us_2024/presentation/figs/setup_method/"
+pump_seps = list(pump_specs.keys())
+pump_sep_idxs = [2, -1]
+pump_sep_idxs = [-1]
+pump_sep_val = np.abs(pump_seps[pump_sep_idxs[0]][1] - pump_seps[pump_sep_idxs[0]][0])
+x_start = pump_seps[pump_sep_idxs[0]][-1]
+x_end = pump_seps[pump_sep_idxs[0]][0] + 0.5
+y_height = np.max(pump_spec[1, :])
+text_x = (x_start + x_end) / 2
+text_y = y_height - 4
+text = f"Pump separation: {pump_sep_val} nm"
+fig, ax = plt.subplots(figsize=(11, 8))
+for pump_sep_idx in pump_sep_idxs:
+    pump_sep = pump_seps[pump_sep_idx]
+    pump_spec = pump_specs[pump_sep]
+    ax.plot(pump_spec[0, :], pump_spec[1, :], label=f"{pump_sep} nm")
+if len(pump_sep_idxs) > 1:
+    ax.legend()
+ax.set_xlabel("Wavelength (nm)")
+ax.set_ylabel("Power (dBm)")
+ax.annotate(
+    "",
+    xy=(x_start, y_height),
+    xytext=(x_end, y_height),
+    arrowprops=dict(arrowstyle="<->", color="black", linewidth=2),
+)
+
+ax.text(text_x, text_y, text, ha="center", fontsize=40)
+fig.tight_layout()
+fig.savefig(
+    os.path.join(fig_loc, f"pump_spectra_{pump_sep_val}.pdf"), bbox_inches="tight"
+)
+plt.show()
+# |%%--%%| <isLdu8wn0K|ecpHqK3mi6>
+# plotting sig + idler spectra
+with open(data_loc_l_sweep, "rb") as f:
+    data = pickle.load(f)
+curly_font = {
+    "color": "k",
+    "weight": "bold",
+    "style": "italic",
+    "size": 50,
+    "rotation": "horizontal",
+}
+large_sep_low_dc = np.squeeze(data[(1607, 1533)]["spectra"][0.1])
+large_sep_cw = np.squeeze(data[(1607, 1533)]["spectra"][1])
+best_loc = 9
+meas_num = 1
+spec = large_sep_low_dc[best_loc, meas_num]
+spec_cw = large_sep_cw[9, meas_num]
+specs = np.array([spec, spec_cw])
+sig_peak_idx_arr = np.argmax(specs[:, 1, :], axis=1)
+sig_peak_loc_arr = specs[np.arange(specs.shape[0]), 0, sig_peak_idx_arr]
+sig_peak_power_arr = specs[np.arange(specs.shape[0]), 1, sig_peak_idx_arr]
+idler_peak_idx_arr = np.argmax(specs[:, 1, sig_peak_idx_arr[0] + 100 :], axis=1)
+idler_peak_loc_arr = specs[
+    np.arange(specs.shape[0]), 0, idler_peak_idx_arr + sig_peak_idx_arr + 100
+]
+idler_peak_power_arr = specs[
+    np.arange(specs.shape[0]), 1, idler_peak_idx_arr + sig_peak_idx_arr + 100
+]
+bracket_offset_arr = [0, -9]
+leg = [r"10 \% DC", "CW"]
+fig, ax = plt.subplots(figsize=(11, 8))
+for i, spec in enumerate(specs):
+    sig_peak_idx = sig_peak_idx_arr[i]
+    sig_peak_loc = sig_peak_loc_arr[i]
+    sig_peak_power = sig_peak_power_arr[i]
+    idler_peak_idx = idler_peak_idx_arr[i]
+    idler_peak_loc = idler_peak_loc_arr[i]
+    idler_peak_power = idler_peak_power_arr[i]
+    curly_x = idler_peak_loc - 2 + bracket_offset_arr[i]
+    curly_end = [curly_x, sig_peak_power]
+    curly_start = [curly_x, idler_peak_power]
+    curly_str_loc = [
+        curly_x - 5,
+        (sig_peak_power + idler_peak_power) / 2,
+    ]
+    horizontal_dash_upper = [
+        [sig_peak_loc, idler_peak_loc],
+        [sig_peak_power, sig_peak_power],
+    ]
+    horizontal_dash_lower = [
+        [curly_x, idler_peak_loc],
+        [idler_peak_power, idler_peak_power],
+    ]
+    ax.plot(spec[0, :], spec[1, :], label=leg[i])
+    ax.set_xlabel("Wavelength (nm)")
+    ax.set_ylabel("Power (dBm)")
+    ax.set_xlim([np.min(spec[0, :]), np.max(spec[0, :])])
+    curlyBrace(
+        fig,
+        ax,
+        curly_start,
+        curly_end,
+        0.05,
+        bool_auto=True,
+        color="black",
+        lw=4,
+        fontdict=curly_font,
+    )
+    ax.text(
+        curly_str_loc[0],
+        curly_str_loc[1],
+        f"{(idler_peak_power - sig_peak_power):.2f} dB",
+        fontsize=40,
+        ha="center",
+        va="center",
+    )
+    ax.plot(horizontal_dash_upper[0], horizontal_dash_upper[1], "k--")
+    ax.plot(horizontal_dash_lower[0], horizontal_dash_lower[1], "k--")
+# offset legend both in x and y
+ax.legend(loc="lower left", bbox_to_anchor=(0.08, 0.1))
+ax.xaxis.set_major_locator(MaxNLocator(nbins=7))
+ax.yaxis.set_major_locator(MaxNLocator(nbins=7))
+fig.tight_layout()
+fig.savefig(os.path.join(fig_loc, "sig_idler_spectra.pdf"), bbox_inches="tight")

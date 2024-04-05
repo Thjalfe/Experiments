@@ -36,9 +36,7 @@ for freq_idx in range(len(freqs)):
     for i, duty_cycle in enumerate(duty_cycles):
         # ax1 = ax.twinx()
         # ax1.plot(time_ref[i], voltage_ref[i], label='Reference')
-        ax.plot(
-            time[i] * 10**6, voltage[i] * 10**3, label=f"{duty_cycle*100:.0f}\%"
-        )
+        ax.plot(time[i] * 10**6, voltage[i] * 10**3, label=f"{duty_cycle*100:.0f}\%")
     ax.set_xlabel(r"Time ($\mu$s)")
     ax.set_ylabel("Voltage (mV)")
     ax.set_title(f"Frequency={freq}")
@@ -137,8 +135,10 @@ ax.set_xlabel(r"Time ($\mu$s)")
 ax.set_ylabel("Voltage (a.u.)")
 ax.legend()
 # |%%--%%| <a0eHedtdST|Fk7XujLiPM>
-# Mean for idler
+# Mean for idler and sig pulses plotted on same plot
 time_around_pulse_start = [-1 * 10**-6, 2 * 10**-6]
+plt.style.use("large_fonts")
+fig_loc_cleous2024 = "/home/thjalfe/Documents/PhD/Projects/papers/cleo_us_2024/presentation/figs/setup_method"
 
 
 def get_pulse_windows(
@@ -181,6 +181,7 @@ def get_pulse_windows(
 voltage_pulses_only_idler, time_ax_idler, mean_len_idler = get_pulse_windows(
     pulse_starts_idler, time_values, time_around_pulse_start, voltage_values
 )
+# Mean and std of multiple idler pulses from the same trace
 mean_pulse_idler = np.mean(voltage_pulses_only_idler, axis=0)
 std_pulse_idler = np.std(voltage_pulses_only_idler, axis=0)
 
@@ -190,6 +191,7 @@ voltages_pulses_only_pump, time_ax_pump, mean_len_pump = get_pulse_windows(
 mean_pulse_pump = np.mean(voltages_pulses_only_pump, axis=0)
 std_pulse_pump = np.std(voltages_pulses_only_pump, axis=0)
 
+# Mean and std of multiple sig pulses from the same trace
 voltages_pulses_only_sig, time_ax_sig, mean_len_sig = get_pulse_windows(
     pulse_starts_sig,
     sig_data[0],
@@ -205,6 +207,13 @@ std_pulse_idler = std_pulse_idler * 1000
 mean_pulse_sig = mean_pulse_sig * 1000
 std_pulse_sig = std_pulse_sig * 1000
 fig, ax = plt.subplots()
+ax.plot(time_ax_sig * 10**6, mean_pulse_sig, label="Signal")
+ax.fill_between(
+    time_ax_sig * 10**6,
+    mean_pulse_sig - std_pulse_sig,
+    mean_pulse_sig + std_pulse_sig,
+    alpha=0.5,
+)
 ax.plot(time_ax_idler * 10**6, mean_pulse_idler, label="Idler")
 ax.fill_between(
     time_ax_idler * 10**6,
@@ -213,19 +222,17 @@ ax.fill_between(
     alpha=0.5,
 )
 # ax.plot(time_ax_pump * 10**6, mean_pulse_pump, label="Pump")
-ax.plot(time_ax_sig * 10**6, mean_pulse_sig, label="Signal")
-ax.fill_between(
-    time_ax_sig * 10**6,
-    mean_pulse_sig - std_pulse_sig,
-    mean_pulse_sig + std_pulse_sig,
-    alpha=0.5,
-)
 ax.set_xlabel(r"Time ($\mu$s)")
 ax.set_ylabel("Voltage (mV)")
-ax.legend()
+ax.set_xlim([np.min(time_ax_idler) * 10**6, np.max(time_ax_idler) * 10**6])
+ax.set_ylim([np.min(mean_pulse_idler) - 0.1, np.max(mean_pulse_sig) + 0.1])
+ax.legend(fontsize=32)
+fig.tight_layout()
+fig.savefig(f"{fig_loc_cleous2024}/mean_sig_idler_pulses.pdf", bbox_inches="tight")
 if save_figs:
     fig.savefig(f"{fig_path}mean_sig_idler_pulses.pdf", bbox_inches="tight")
 # |%%--%%| <Fk7XujLiPM|gq11egzJkJ>
+plt.style.use("large_fonts")
 mean_pulse_idler_normalized = mean_pulse_idler / np.max(mean_pulse_idler)
 std_pulse_idler_normalized = std_pulse_idler / np.max(mean_pulse_idler)
 mean_pulse_idler_normalized_rolling = rolling_average(mean_pulse_idler_normalized, 3)
@@ -234,10 +241,13 @@ pump_voltage_normalized_idxs = pump_voltage_normalized[
     pulse_starts_pump[1] - 5000 : pulse_starts_pump[1] + 10000
 ]
 pump_voltage_normalized_idxs_rolling = rolling_average(pump_voltage_normalized_idxs, 3)
-plt.rcParams["figure.figsize"] = (16, 14)
 plt.ioff()
 fig, ax = plt.subplots()
-ax.plot(time_ax_idler * 10**6, mean_pulse_idler_normalized, label="Idler")
+ax.plot(
+    time_ax_idler * 10**6,
+    mean_pulse_idler_normalized,
+    label="Norm.(P$_{\mathrm{idler}})^2$",
+)
 # ax.plot(time_ax_idler * 10**6, mean_pulse_idler_normalized_rolling, label="Idler")
 ax.fill_between(
     time_ax_idler * 10**6,
@@ -245,12 +255,22 @@ ax.fill_between(
     mean_pulse_idler_normalized + std_pulse_idler_normalized,
     alpha=0.5,
 )
-ax.plot(time_ax_pump * 10**6, pump_voltage_normalized_idxs**2, label=r"Pump$^2$")
+ax.plot(
+    time_ax_pump * 10**6,
+    pump_voltage_normalized_idxs**2,
+    label=r"Norm.(P$_{\mathrm{pump}})^2$",
+)
 # ax.plot(time_ax_pump * 10**6, pump_voltage_normalized_idxs_rolling**2, label=r"Pump$^2$ Rolling")
 ax.set_xlim(-0.1, 1.1)
+ax.set_ylim([-0.1, 1.1])
 ax.set_xlabel(r"Time ($\mu$s)")
-ax.set_ylabel("Voltage (a.u.)")
-ax.legend()
+ax.set_ylabel("Norm. power")
+fig.tight_layout()
+ax.legend(fontsize=32)
+fig.savefig(
+    f"{fig_path_cleous2024}/mean_pump_idler_pulses_normalized_w_std.pdf",
+    bbox_inches="tight",
+)
 if save_figs:
     fig.savefig(
         f"{fig_path}mean_pump_idler_pulses_normalized_w_std.pdf", bbox_inches="tight"
@@ -262,14 +282,16 @@ if save_figs:
 freq_idx = 3
 freq = freqs[freq_idx]
 sub_data = pump_data[freq]
-plt.ion()
+# plt.ion()
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
-with open("../data/scope_traces/freq_and_cycle_vary.pkl", "rb") as f:
+# with open("../../data/scope_traces/freq_and_cycle_vary.pkl", "rb") as f:
+#     data = pickle.load(f)
+with open("../data/scope_traces/freq_cycle_vary_pumps.pkl", "rb") as f:
     data = pickle.load(f)
 # |%%--%%| <kmVhiYHnNW|t2yhxHMzWr>
 freqs = list(data.keys())
-freq_idx = 0
+freq_idx = 3
 freq = freqs[freq_idx]
 sub_data = data[freq]
 duty_cycles = np.array(sub_data["duty_cycle"])
@@ -294,7 +316,9 @@ for i, duty_cycle in enumerate(duty_cycles):
     ax.set_xlabel(r"Time ($\mu$s)")
     ax.set_ylabel("Voltage (a.u.)")
     # ax.set_title(f"Frequency={freq}, Duty Cycle: {duty_cycle}")
-    ax.legend(title="Duty Cycle")
+ax.legend(title="Duty Cycle", fontsize=32)
+fig.tight_layout()
+fig.savefig(f"{fig_path_cleous2024}/diff_duty_cycles.pdf", bbox_inches="tight")
 if save_figs:
     fig.savefig(f"{fig_path}rep_rate_{freq}_diff_duty_cycles.pdf", bbox_inches="tight")
     fig.savefig(
@@ -316,7 +340,7 @@ plt.rcParams["legend.fontsize"] = 30
 plt.rcParams["axes.labelsize"] = 45
 plt.rcParams["xtick.labelsize"] = 35
 plt.rcParams["ytick.labelsize"] = 35
-plt.rcParams["legend.title_fontsize"] = 35
+plt.rcParams["legend.title_fontsize"] = 36
 
 fig, ax = plt.subplots()
 for i, duty_cycle in enumerate(duty_cycles):

@@ -105,14 +105,14 @@ if save_spectra:
     plt.ion()
 # |%%--%%| <HYw7Wi7LKs|VgSaNZXPa6>
 # Specific spectrum to be used
-pump_wl_idx = 0
+pump_wl_idx = -1
 pump_wl_pair = pump_wl_pairs[pump_wl_idx]
-dc_idx = 0
+dc_idx = -1
 dc = duty_cycles[dc_idx]
 rep_num = 0
 spectra = np.array(data[pump_wl_pair]["spectra"][dc])
 idx = np.argmax(ce_dict[pump_wl_pair][dc])
-spectrum = spectra[rep_num, idx, :, :]
+spectrum = spectra[idx, rep_num, :, :]
 fig, ax = plt.subplots()
 ax.plot(spectrum[0, :], spectrum[1, :])
 ax.set_xlabel("Wavelength (nm)")

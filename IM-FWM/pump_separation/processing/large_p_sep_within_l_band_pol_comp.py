@@ -20,7 +20,7 @@ from pump_separation.funcs.utils import (
 plt.style.use("custom")
 cols = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 plt.ion()
-plt.rcParams["figure.figsize"] = (20, 11)
+# plt.rcParams["figure.figsize"] = (20, 11)
 
 
 def extract_numbers_from_filename(f):
@@ -62,18 +62,26 @@ def load_oscilloscope_data(file_dir):
 
 
 def calculate_ce(
-    data, pump_vals, peak_threshold=0.1, peak_min=-52, peak_range=1, peak_max=-20
+    data,
+    pump_vals,
+    duty_cycles_available,
+    peak_threshold=0.1,
+    peak_min=-52,
+    peak_range=1,
+    peak_max=-20,
+    duty_cycles_wanted=[0.1, 0.2, 0.5, 1],
 ):
     num_meas_for_each_config = len(data[0]["wavelengths"][0, :, 0])
-    num_pulses = len(data[0]["wavelengths"][:, 0, 0])
-    ce_all = np.zeros((len(data), num_pulses, num_meas_for_each_config))
+    duty_cycle_idx_map = [duty_cycles_available.index(d) for d in duty_cycles_wanted]
+    ce_all = np.zeros((len(data), len(duty_cycles_wanted), num_meas_for_each_config))
     for i, d in enumerate(data):
-        for j in range(num_pulses):
+        for j in range(len(duty_cycles_wanted)):
+            duty_cycle_idx = duty_cycle_idx_map[j]
             for k in range(num_meas_for_each_config):
                 cur_data = np.vstack(
                     (
-                        np.squeeze(d["wavelengths"])[j, k, :],
-                        np.squeeze(d["powers"])[j, k, :],
+                        np.squeeze(d["wavelengths"])[duty_cycle_idx, k, :],
+                        np.squeeze(d["powers"])[duty_cycle_idx, k, :],
                     )
                 ).T
                 x = return_filtered_peaks(
@@ -110,7 +118,7 @@ def plot_ce_vs_duty_cycle(
         )
     ax.set_xlabel(r"Duty cycle (\%)")
     ax.set_ylabel("CE (dB)")
-    ax.set_title(f"CE vs duty cycle, {extra_title}")
+    # ax.set_title(f"CE vs duty cycle, {extra_title}")
     leg = ax.legend(title="Pump separation", loc="upper right")
     if save_figs:
         fig.savefig(
@@ -129,18 +137,26 @@ def plot_ce_vs_pump_sep(
     extra_title="",
     extra_fig_name="",
 ):
-    fig, ax = plt.subplots()
+    from matplotlib.ticker import MaxNLocator
+
+    fig, ax = plt.subplots(figsize=(11, 6))
     for i in range(num_pulses):
+        if duty_cycles[i] == 1:
+            label = "CW"
+        else:
+            label = rf"{duty_cycles[i] * 100} \%"
         ax.plot(
             pump_seps,
             -ce_mean[:, i] - 10 * np.log10(duty_cycles[i]),
             "-o",
-            label=rf"{duty_cycles[i] * 100} \%",
+            label=label,
         )
-    ax.set_xlabel(r"Pump separation (nm)")
-    ax.set_ylabel("CE (dB)")
-    ax.set_title(f"CE vs pump sep, with duty cycle offset, {extra_title}")
+    ax.set_xlabel(r"$\lambda_p-\lambda_q$ (nm)")
+    ax.set_ylabel(r"$\eta$ (dB)")
+    # ax.set_title(f"CE vs pump sep, with duty cycle offset, {extra_title}")
     leg = ax.legend(title="Duty cycle", loc="upper right")
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=4, integer=True))
+    fig.tight_layout()
     if save_figs:
         fig.savefig(
             fig_path
@@ -160,7 +176,7 @@ def plot_raw_data(
         ax.plot(wl_ax, p_ax, label=rf"{duty_cycles[i] * 100} \%")
         ax.set_xlabel("Wavelength (nm)")
         ax.set_ylabel("Power (dBm)")
-    ax.set_title(rf"2 nm sep, {extra_title}")
+    # ax.set_title(rf"2 nm sep, {extra_title}")
     leg = ax.legend(title="Duty cycle", loc="upper right")
     if save_figs:
         fig.savefig(
@@ -181,14 +197,35 @@ fig_path = "../figs/pol_diff_within_L/"
 if not os.path.exists(fig_path):
     os.makedirs(fig_path)
 
-save_figs = True
+save_figs = False
 
 # Load and process data from first directory
 spectra_data_max, pump_vals_max, pump_seps_max = load_spectra_data(file_dir_max)
 osci_data_max = load_oscilloscope_data(file_dir_max)
-ce_mean_max, ce_std_max = calculate_ce(spectra_data_max, pump_vals_max)
-duty_cycles_max = spectra_data_max[0]["duty_cycle"]
-num_pulses_max = len(spectra_data_max[0]["wavelengths"][:, 0, 0])
+duty_cycles_wanted = [0.1, 0.2, 0.5, 1]
+ce_mean_max, ce_std_max = calculate_ce(
+    spectra_data_max,
+    pump_vals_max,
+    spectra_data_max[0]["duty_cycle"],
+    duty_cycles_wanted=duty_cycles_wanted,
+)
+duty_cycles_max = duty_cycles_wanted
+num_pulses_max = len(duty_cycles_max)
+# |%%--%%| <qVI1KpRhc4|vH38TpxZ2c>
+c = 2.998e8
+pump_seps_hz = np.zeros(len(pump_vals_max))
+for i, wl_pair in enumerate(pump_vals_max):
+    pump_seps_hz[i] = c * np.abs(1 / wl_pair[0] - 1 / wl_pair[1]) * 1e9
+ce_adj = -ce_mean_max - 10 * np.log10(duty_cycles_max)
+ce_adj = ce_adj.T
+data = {
+    "CE [dB]": ce_adj,
+    # "Spectral separation [Hz]": pump_seps_hz,
+    "pump_wls": pump_vals_max,
+    "Duty cycles": duty_cycles_max,
+}
+# |%%--%%| <vH38TpxZ2c|gki1lrRu3L>
+
 
 # Plot data from first directory
 plot_ce_vs_duty_cycle(
@@ -206,7 +243,7 @@ plot_ce_vs_pump_sep(
     duty_cycles_max,
     num_pulses_max,
     fig_path,
-    save_figs,
+    False,
     extra_title="pol max",
     extra_fig_name="pol_max",
 )
@@ -218,6 +255,7 @@ plot_raw_data(
     extra_title="pol max",
     extra_fig_name="pol_max",
 )
+# |%%--%%| <gki1lrRu3L|Uiy4rJefy5>
 
 # Load and process data from second directory
 spectra_data_min, pump_vals_min, pump_seps_min = load_spectra_data(file_dir_min)
@@ -257,7 +295,7 @@ plot_raw_data(
 
 # Get oscilloscope data
 osci_data = load_oscilloscope_data(file_dir_osc)
-# |%%--%%| <5shIm0gsCn|AshiPwhVfw>
+# |%%--%%| <Uiy4rJefy5|AshiPwhVfw>
 fig, ax = plt.subplots()
 for i, duty_cycle in enumerate(duty_cycles_max):
     ce_diff = ce_mean_min[:, i] - ce_mean_max[:, i]
