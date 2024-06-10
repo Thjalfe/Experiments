@@ -104,7 +104,10 @@ def sweep_tisa(
     osa: OSA,
     pico: PicoScope2000a,
     pulse_freq: float,
+    pump_wl_sep: float,
     logger: logging.Logger,
+    initialize_tisa_properly: bool = True,
+    error_tolerance: float = 0.05,
 ):
     def init_tisa_sweep(
         start_wl: float,
@@ -117,13 +120,15 @@ def sweep_tisa(
     ):
         logging_message(logger, "Initializing TISA sweep...")
         # -1*stepsize due to the hysterisis of the tisa
-        tisa.set_wavelength_iterative_method(
-            start_wl - stepsize, osa, error_tolerance=0.05
-        )
+        if initialize_tisa_properly:
+            tisa.set_wavelength_iterative_method(
+                start_wl - stepsize, osa, error_tolerance=error_tolerance
+            )
         osa.span = (start_wl - 1, start_wl + 1)
         osa.resolution = osa_params["res"]
         osa.sensitivity = osa_params["sens"]
-        move_tisa_until_no_hysteresis(stepsize, tisa, osa, logger)
+        if initialize_tisa_properly:
+            move_tisa_until_no_hysteresis(stepsize, tisa, osa, logger)
         if idler_side == "red":
             osa_span = (start_wl - 1, idler_loc + 1)
             osa.span = osa_span
@@ -142,6 +147,7 @@ def sweep_tisa(
         osa,
     )
     spectrum_dict = {dc: [] for dc in duty_cycles}
+    wl_dist = np.abs(start_tisa_wl - idler_loc)
     for i in range(num_steps):
         logging_message(logger, f"Starting TiSa sweep {i+1}/{num_steps}...")
         for dc in duty_cycles:
@@ -155,9 +161,14 @@ def sweep_tisa(
                 powers = osa.powers
                 spectrum = np.array([wavelengths, powers])
                 sweeps_for_dc.append(spectrum)
+                tisa_wl = wavelengths[np.argmax(powers)]
             spectrum_dict[dc].append(sweeps_for_dc)
         tisa.delta_wl_nm(stepsize)
-        osa.span = (osa.span[0] + stepsize, osa.span[1] + stepsize)
+        print(tisa_wl)
+        if idler_side == "red":
+            osa.span = (tisa_wl - 1, tisa_wl + (wl_dist + 1))
+        elif idler_side == "blue":
+            osa.span = (tisa_wl + (wl_dist - 1), tisa_wl + 1)
         logging_message(logger, f"TiSa sweep {i+1}/{num_steps} done!")
     return spectrum_dict
 
@@ -172,14 +183,19 @@ def sweep_tisa_multiple_pump_seps(
     osa: OSA,
     pico: PicoScope2000a,
     data_folder: str,
+    initialize_tisa_properly: bool = True,
     ipg_edfa: Optional[IPGEDFA] = None,
+    error_tolerance: float = 0.05,
 ):
+    tisa_tot_wl_move = params["tisa_stepsize"] * params["num_tisa_steps"]
     logger = setup_logging(
         data_folder, "log.log", [pump_laser1, pump_laser2], verdi, [ipg_edfa]
     )
     logging_message(logger, f"Starting sweep at {datetime.datetime.now()}")
     tisa_start_wl = params["start_wl"]
     for pump_wl_idx in range(len(params["pump_wl_list"])):
+        pump1_power = params["pump_powers"][pump_wl_idx, 0]
+        pump2_power = params["pump_powers"][pump_wl_idx, 1]
         pump1_wl = params["pump_wl_list"][pump_wl_idx][0]
         pump2_wl = params["pump_wl_list"][pump_wl_idx][1]
         logging_message(
@@ -187,6 +203,8 @@ def sweep_tisa_multiple_pump_seps(
         )
         pump_laser1.wavelength = pump1_wl
         pump_laser2.wavelength = pump2_wl
+        pump_laser1.power = pump1_power
+        pump_laser2.power = pump2_power
         idler_wl_approx = calculate_approx_idler_loc(
             tisa_start_wl, params["pump_wl_list"][pump_wl_idx], "red"
         )
@@ -198,13 +216,15 @@ def sweep_tisa_multiple_pump_seps(
         # Error tolerance higher than normal, but for this function, we do not know the
         # correct wavelengths beforehand so it does not matter
 
-        tisa_span_len = tisa_span[1] - tisa_span[0]
-        num_samples = int(tisa_span_len / osa.resolution) * params["sampling_ratio"]
-        if num_samples % 2 == 0:
-            num_samples += 1
-        if params["sampling_ratio"] == 0:
-            num_samples = len(osa.wavelengths)
-        osa.samples = num_samples
+        ### Currently does not work but also does not do anything either way, maybe
+        ### something copied over from other code?
+        # tisa_span_len = tisa_span[1] - tisa_span[0]
+        # num_samples = int(tisa_span_len / osa.resolution) * params["sampling_ratio"]
+        # if num_samples % 2 == 0:
+        #     num_samples += 1
+        # if params["sampling_ratio"] == 0:
+        #     num_samples = len(osa.wavelengths)
+        # osa.samples = num_samples
 
         logging_message(
             logger,
@@ -223,7 +243,10 @@ def sweep_tisa_multiple_pump_seps(
             osa,
             pico,
             params["pulse_freq"],
+            pump1_wl - pump2_wl,
             logger,
+            initialize_tisa_properly=initialize_tisa_properly,
+            error_tolerance=error_tolerance,
         )
         logging_message(
             logger,
@@ -258,4 +281,7 @@ def sweep_tisa_multiple_pump_seps(
             logger,
             f"Sig wl for max CE for pump wls {params['pump_wl_list'][pump_wl_idx]} is {sig_wl_max}",
         )
-        tisa_start_wl = sig_wl_max
+        if params["idler_side"] == "red":
+            tisa_start_wl = sig_wl_max - 2 / 3 * tisa_tot_wl_move
+        else:
+            tisa_start_wl = sig_wl_max

@@ -48,8 +48,8 @@ ando2 = AndoLaser(ando2_start, GPIB_address=24, power=10)
 time.sleep(0.1)
 ando1.laser_on()
 ando2.laser_on()
-TiSa = TiSapphire(3)
-verdi = VerdiLaser(com_port=4)
+# TiSa = TiSapphire(3)
+# verdi = VerdiLaser(com_port=4)
 osa = OSA(
     970,
     979,

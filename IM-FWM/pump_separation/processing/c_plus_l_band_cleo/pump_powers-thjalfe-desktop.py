@@ -2,11 +2,11 @@ import numpy as np
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 import pickle
 
+plt.style.use("custom")
 color_cycle = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-plt.style.use("large_fonts")
+plt.rcParams["figure.figsize"] = (16, 11)
 plt.ion()
 
 
@@ -33,7 +33,7 @@ stats_df = sheet_2_df.groupby("# Wavelength [nm]")["conversion eff"].agg(
 stats_df_dB = sheet_2_df.groupby("# Wavelength [nm]")[" Cross talk [dB]"].agg(
     ["mean", "std"]
 )
-fig_dir = "../../../../../papers/cleo_us_2024/presentation/figs/setup_method/"
+fig_dir = "../../figs/sweep_multiple_separations_w_polopt/cleo_us_2023/pump_powers/"
 if not os.path.exists(fig_dir):
     os.makedirs(fig_dir)
 save_figs = False
@@ -74,23 +74,23 @@ ax.legend()
 if save_figs:
     fig.savefig(f"{fig_dir}pump_powers.pdf", bbox_inches="tight")
 
-fig, ax = plt.subplots(figsize=(14, 8))
+fig, ax = plt.subplots()
 ax.errorbar(
     stats_df.index[1:],
     stats_df["mean"][1:] * 100,
-    # yerr=stats_df["std"][1:] * 100,
+    yerr=stats_df["std"][1:] * 100,
     fmt="-x",
-    markersize=16,
+    markersize=10,
 )
-ax.yaxis.set_major_locator(MaxNLocator(nbins=5))
-ax.set_xlabel("Wavelength (nm)")
-ax.set_ylabel(r"LP$_{01}\rightarrow$LP$_{11}$ (\%)")
+ax.set_xlabel("Wavelength (nm)", fontsize=50)
+ax.set_ylabel(r"LP$_{01}\rightarrow$LP$_{11}$ (\%)", fontsize=50)
+ax.tick_params(labelsize=40)
 if save_figs:
     fig.savefig(f"{fig_dir}lpg_conversion_eff.pdf", bbox_inches="tight")
-fig.savefig(
-    f"{fig_dir}lpg_conversion_eff.pdf",
-    bbox_inches="tight",
-)
+    fig.savefig(
+        "../../../../../papers/cleo_us_2023/figs/lpg_conversion_eff.pdf",
+        bbox_inches="tight",
+    )
 
 fig, ax = plt.subplots()
 ax.errorbar(stats_df_dB.index, stats_df_dB["mean"], yerr=stats_df_dB["std"], fmt="-x")
