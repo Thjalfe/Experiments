@@ -6,6 +6,7 @@ from matplotlib.ticker import MaxNLocator
 import pickle
 
 color_cycle = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+plt.rcParams["figure.figsize"] = (16, 11)
 plt.style.use("large_fonts")
 plt.ion()
 
@@ -74,7 +75,7 @@ ax.legend()
 if save_figs:
     fig.savefig(f"{fig_dir}pump_powers.pdf", bbox_inches="tight")
 
-fig, ax = plt.subplots(figsize=(14, 8))
+fig, ax = plt.subplots(figsize=(11, 8))
 ax.errorbar(
     stats_df.index[1:],
     stats_df["mean"][1:] * 100,
@@ -82,13 +83,12 @@ ax.errorbar(
     fmt="-x",
     markersize=16,
 )
-ax.yaxis.set_major_locator(MaxNLocator(nbins=5))
 ax.set_xlabel("Wavelength (nm)")
 ax.set_ylabel(r"LP$_{01}\rightarrow$LP$_{11}$ (\%)")
 if save_figs:
     fig.savefig(f"{fig_dir}lpg_conversion_eff.pdf", bbox_inches="tight")
 fig.savefig(
-    f"{fig_dir}lpg_conversion_eff.pdf",
+    "../../../../../papers/cleo_us_2024/presentation/figs/setup_method/lpg_conversion_eff2.pdf",
     bbox_inches="tight",
 )
 

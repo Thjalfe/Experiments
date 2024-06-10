@@ -32,3 +32,8 @@ IM-FWM/pump_separation/funcs/sweep_pumps_around_opt-Thjalfe-desktop.py
 IM-FWM/pump_separation/funcs/sweep_tisa_to_find_opt-Thjalfe-desktop.py
 InstrumentControl
 SM-FWM/spectra_tisa=998nm_c-band_sweep.pkl
+IM-FWM/pump_separation/processing/ce_vs_pump_sep_l.pkl
+IM-FWM/pump_separation/processing/data.pkl
+IM-FWM/pump_separation/processing/ce_vs_pump_sep.json
+.gitignore-thjalfe-desktop
+.gitignore-thjalfe-desktop-thjalfe-desktop

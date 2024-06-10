@@ -629,7 +629,7 @@ for slope_segment, slope in enumerate(mean_slope_between_all_dc):
         rotation=30,
     )
 ax.set_xlabel("1 / Duty Cycle")
-ax.legend(fontsize=32)
+ax.legend()
 ax.set_xticks(inv_duty_cycles)
 ax.set_xticklabels(1 / duty_cycle_arr_local)
 ax.set_ylabel("Relative CE (dB)")
@@ -637,23 +637,19 @@ ax.yaxis.set_major_locator(MaxNLocator(nbins=5))
 ax.set_xlim([np.min(inv_duty_cycles) - 0.01, np.max(inv_duty_cycles) + 0.2])
 ax.set_ylim([-0.1, 20.1])
 fig.tight_layout()
-# fig.savefig(os.path.join(fig_path, "ce_vs_dc_and_slopes.pdf"), bbox_inches="tight")
+fig.savefig(os.path.join(fig_path, "ce_vs_dc_and_slopes.pdf"), bbox_inches="tight")
 # |%%--%%| <qlJab9gk88|NyyuKf2Lrg>
 # slope between each point
 slopes = np.diff(max_ce_vs_pumpsep_local - ce_offset) / np.diff(
     10 * np.log10(inv_duty_cycles)
 )
-# |%%--%%| <NyyuKf2Lrg|EPNtbLuJZS>
+# |%%--%%| <NyyuKf2Lrg|qfM8qhRNH9>
 ### Plotting spectra
 plt.rcParams["figure.figsize"] = (16, 6)
 plt.ioff()
 pump_spec_loc = "../data/sweep_multiple_separations_w_polopt/cleo/pump_spectra.pkl"
-pump_spec_loc = (
-    "../data/sweep_multiple_separations_w_polopt/pump_spectra_cplus_l/spectra.pkl"
-)
 with open(pump_spec_loc, "rb") as f:
     pump_specs = pickle.load(f)
-
 pump_spec = pump_specs[(1607, 1533)]
 
 with open(data_loc_l_sweep, "rb") as f:
@@ -733,76 +729,44 @@ if save_figs:
     fig.savefig(
         "../../../../../papers/cleo_us_2023/figs/spectra.pdf", bbox_inches="tight"
     )
-# |%%--%%| <GLbzX0Hu3H|isLdu8wn0K>
+# |%%--%%| <qfM8qhRNH9|isLdu8wn0K>
 plt.style.use("large_fonts")
 fig_loc = "/home/thjalfe/Documents/PhD/Projects/papers/cleo_us_2024/presentation/figs/setup_method/"
-pump_wls = list(pump_specs.keys())
-pump_wls = [item for item in pump_wls if isinstance(item, tuple)]
-pump_seps = pump_specs["pump_sep"]
+pump_seps = list(pump_specs.keys())
 pump_sep_idxs = [2, -1]
-pump_sep_idxs = [-2]
-pump_sep_val = np.abs(pump_wls[pump_sep_idxs[0]][1] - pump_wls[pump_sep_idxs[0]][0])
-x_start = pump_wls[pump_sep_idxs[0]][-1] - 0.3
-x_end = pump_wls[pump_sep_idxs[0]][0] + 0.4
-y_height = 0
-text_loc_x = (x_start + x_end) / 2
-text_loc_y = y_height - 6.5
-text = f"Pump separation: {pump_sep_val:.0f} nm"
-fig, ax = plt.subplots(figsize=(14, 8))
+pump_sep_idxs = [-1]
+pump_sep_val = np.abs(pump_seps[pump_sep_idxs[0]][1] - pump_seps[pump_sep_idxs[0]][0])
+x_start = pump_seps[pump_sep_idxs[0]][-1]
+x_end = pump_seps[pump_sep_idxs[0]][0] + 0.5
+y_height = np.max(pump_spec[1, :])
+text_x = (x_start + x_end) / 2
+text_y = y_height - 4
+text = f"Pump separation: {pump_sep_val} nm"
+fig, ax = plt.subplots(figsize=(11, 8))
 for pump_sep_idx in pump_sep_idxs:
-    pump_wls_tmp = pump_wls[pump_sep_idx]
     pump_sep = pump_seps[pump_sep_idx]
-    pump_spec = pump_specs[pump_wls_tmp]
-    offset = np.max(pump_spec[1, :])
-    ax.plot(pump_spec[0, :], pump_spec[1, :] - offset, label=f"{pump_sep:.0f}")
+    pump_spec = pump_specs[pump_sep]
+    ax.plot(pump_spec[0, :], pump_spec[1, :], label=f"{pump_sep} nm")
 if len(pump_sep_idxs) > 1:
-    ax.legend(title=r"$\Delta\lambda$ (nm)")
+    ax.legend()
 ax.set_xlabel("Wavelength (nm)")
-ax.set_ylabel("Power (dB)")
-ax.xaxis.set_major_locator(MaxNLocator(nbins=8))
-ax.yaxis.set_major_locator(MaxNLocator(nbins=9))
+ax.set_ylabel("Power (dBm)")
 ax.annotate(
     "",
     xy=(x_start, y_height),
     xytext=(x_end, y_height),
     arrowprops=dict(arrowstyle="<->", color="black", linewidth=2),
 )
-ax.text(text_loc_x, text_loc_y, text, ha="center", fontsize=52)
-ax.text(text_loc_x, text_loc_y - 13, r"$P_p+P_q\approx$3 W", ha="center", fontsize=52)
-x_start_c_pump = 1563
-x_start_l_pump = 1577
-offset_y = 35
-ax.annotate(
-    "",
-    xy=(x_start_c_pump, y_height - offset_y),
-    xytext=(x_start, y_height - offset_y),
-    arrowprops=dict(arrowstyle="<-", color="black", linewidth=2),
-)
-text_loc_c_band = (x_start_c_pump + x_start) / 2
-y_loc_c_l_pump = y_height - offset_y + 3
-ax.text(text_loc_c_band, y_loc_c_l_pump, "1563-1535.5", ha="center", fontsize=52)
-ax.annotate(
-    "",
-    xy=(x_start_l_pump, y_height - offset_y),
-    xytext=(x_end, y_height - offset_y),
-    arrowprops=dict(arrowstyle="<-", color="black", linewidth=2),
-)
-text_loc_l_band = (x_start_l_pump + x_end) / 2
-y_loc_c_l_pump = y_height - offset_y + 5
-ax.text(text_loc_l_band, y_loc_c_l_pump, "1577-1604.5", ha="center", fontsize=52)
-ax.set_xlim([np.min(pump_spec[0, :]), np.max(pump_spec[0, :])])
-ax.set_ylim([-55, 0.5])
+
+ax.text(text_x, text_y, text, ha="center", fontsize=40)
 fig.tight_layout()
-# fig.savefig(os.path.join(fig_loc, f"pump_spectra_69_and_74.pdf"), bbox_inches="tight")
 fig.savefig(
     os.path.join(fig_loc, f"pump_spectra_{pump_sep_val}.pdf"), bbox_inches="tight"
 )
-fig.savefig(
-    os.path.join(fig_loc, f"pump_spectra_{pump_sep_val}.svg"), bbox_inches="tight"
-)
+plt.show()
 # |%%--%%| <isLdu8wn0K|ecpHqK3mi6>
 # plotting sig + idler spectra
-with open(data_loc_c_sweep, "rb") as f:
+with open(data_loc_l_sweep, "rb") as f:
     data = pickle.load(f)
 curly_font = {
     "color": "k",
@@ -811,9 +775,9 @@ curly_font = {
     "size": 50,
     "rotation": "horizontal",
 }
-large_sep_low_dc = np.squeeze(data[(1604.5, 1535.5)]["spectra"][0.1])
-large_sep_cw = np.squeeze(data[(1604.5, 1535.5)]["spectra"][1])
-best_loc = 6
+large_sep_low_dc = np.squeeze(data[(1607, 1533)]["spectra"][0.1])
+large_sep_cw = np.squeeze(data[(1607, 1533)]["spectra"][1])
+best_loc = 9
 meas_num = 1
 spec = large_sep_low_dc[best_loc, meas_num]
 spec_cw = large_sep_cw[9, meas_num]
@@ -829,7 +793,7 @@ idler_peak_power_arr = specs[
     np.arange(specs.shape[0]), 1, idler_peak_idx_arr + sig_peak_idx_arr + 100
 ]
 bracket_offset_arr = [0, -9]
-leg = [r"0.1", "CW"]
+leg = [r"10 \% DC", "CW"]
 fig, ax = plt.subplots(figsize=(11, 8))
 for i, spec in enumerate(specs):
     sig_peak_idx = sig_peak_idx_arr[i]
@@ -871,7 +835,7 @@ for i, spec in enumerate(specs):
     ax.text(
         curly_str_loc[0],
         curly_str_loc[1],
-        f"{(idler_peak_power - sig_peak_power):.1f} dB",
+        f"{(idler_peak_power - sig_peak_power):.2f} dB",
         fontsize=40,
         ha="center",
         va="center",
@@ -879,7 +843,7 @@ for i, spec in enumerate(specs):
     ax.plot(horizontal_dash_upper[0], horizontal_dash_upper[1], "k--")
     ax.plot(horizontal_dash_lower[0], horizontal_dash_lower[1], "k--")
 # offset legend both in x and y
-ax.legend(loc="lower left", bbox_to_anchor=(0.08, 0.1), title="Duty Cycle")
+ax.legend(loc="lower left", bbox_to_anchor=(0.08, 0.1))
 ax.xaxis.set_major_locator(MaxNLocator(nbins=7))
 ax.yaxis.set_major_locator(MaxNLocator(nbins=7))
 fig.tight_layout()
