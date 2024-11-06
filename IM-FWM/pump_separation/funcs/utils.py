@@ -99,11 +99,21 @@ def return_filtered_peaks(
         np.nanargmin(np.abs(data[:, 0] - peak_position))
         for peak_position in peak_positions
     ]
-    filtered_peaks = [max_peak_loc]
-    for pos in peak_position_indices:
-        peak = min(peaks, key=lambda x: abs(x - pos))
-        if abs(peak - pos) <= tolerance_idxs:
-            filtered_peaks.append(peak)
+
+    peaks_within_tolerance = [
+        peak
+        for peak in peaks
+        for peak_pos_idx in peak_position_indices
+        if abs(data[peak, 0] - data[peak_pos_idx, 0]) <= tolerance_nm
+    ]
+    idler_loc_after_correction = peaks_within_tolerance[
+        np.argmax(data[peaks_within_tolerance, 1])
+    ]
+    filtered_peaks = [max_peak_loc, idler_loc_after_correction]
+    # for pos in peak_position_indices:
+    #     peak = min(peaks, key=lambda x: abs(x - pos))
+    #     if abs(peak - pos) <= tolerance_idxs:
+    #         filtered_peaks.append(peak)
     return list(np.unique(filtered_peaks))
 
 
@@ -125,9 +135,11 @@ def calculate_differences(peaks, data):
     highest_peak_value = peak_values[highest_peak_index]
 
     peak_differences = [
-        abs(highest_peak_value - peak_values[i])
-        if i != highest_peak_index
-        else float("inf")
+        (
+            abs(highest_peak_value - peak_values[i])
+            if i != highest_peak_index
+            else float("inf")
+        )
         for i in range(len(peak_values))
     ]
     return peak_differences
@@ -424,4 +436,27 @@ def extract_sig_wl_and_ce_multiple_spectra(
         sig_wl[j] = processed["peak_positions"][sig_loc]
         idler_wl[j] = processed["peak_positions"][sig_loc + 1]
         ce[j] = processed["differences"][-1]
+    return sig_wl, ce, idler_wl
+
+
+def extract_sig_wl_and_ce_single_spectrum(
+    data,
+    pump_lst,
+    prominence=0.1,
+    height=-75,
+    tolerance_nm=0.25,
+    max_peak_min_height=-35,
+):
+    processed = process_single_dataset(
+        data,
+        prominence,
+        height,
+        (pump_lst[0], pump_lst[1]),
+        tolerance_nm,
+        max_peak_min_height,
+    )
+    sig_loc = np.argmax(processed["differences"])
+    sig_wl = processed["peak_positions"][sig_loc]
+    idler_wl = processed["peak_positions"][sig_loc + 1]
+    ce = processed["differences"][-1]
     return sig_wl, ce, idler_wl
