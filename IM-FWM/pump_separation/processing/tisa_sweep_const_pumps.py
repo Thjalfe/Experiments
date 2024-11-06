@@ -5,22 +5,22 @@ import matplotlib.pyplot as plt
 import os
 import pickle
 
-plt.style.use("custom")
+# plt.style.use("custom")
 plt.rcParams["figure.figsize"] = (16, 11)
 plt.ioff()
 
 data_loc = "../data/sweep_multiple_separations_w_polopt/cleo/manual/tisa_set_to_lin_fit/merged_data.pkl"
 data_loc = "../data/tisa_sweep_to_find_opt/pump_wl_mean_1590/merged_data.pkl"
-data_loc = "../data/sweep_multiple_separations_w_polopt/pol_opt_auto/tisa_sweep_around_opt/mean_p_wl=1590.0/merged_data.pkl"
-data_loc = (
-    "../data/tisa_sweep_to_find_opt/moving_pump_mean/pump_wl_dist=10nm/merged_data.pkl"
-)
-data_loc = "../data/sweep_multiple_separations_w_polopt/pol_opt_auto/tisa_sweep_around_opt/moving_pumpwl_mean/pump_wl_dist=10.0nm/merged_data.pkl"
+data_loc = r"C:\Users\FTNK-FOD\Desktop\Thjalfe\Experiments\IM-FWM\pump_separation\data\4MSI\tisa_sweep_to_find_opt\pump_modes=02_equal_input_pump_p\merged_data.pkl"
+# data_loc = r"C:\Users\FTNK-FOD\Desktop\Thjalfe\Experiments\IM-FWM\pump_separation\data\tisa_sweep_to_find_opt\pump_wl_mean_1606.5\pump_wl=(1609.0, 1604.0).pkl"
+# data_loc = r"C:\Users\FTNK-FOD\Desktop\Thjalfe\Experiments\IM-FWM\pump_separation\data\4MSI\tisa_sweep_to_find_opt\pump_wl_mean_1606.5\pump_wl=(1609.0, 1604.0).pkl"
 # data_loc = "../data/sweep_multiple_separations_w_polopt/cleo/old_linear_fit_from_v_old_c_plus_l/data.pkl"
 with open(data_loc, "rb") as f:
     data = pickle.load(f)
 
-fig_folder = "../../figs/sweep_pumpwl_mean_const_pump_sep/10_nm"
+fig_folder = (
+    "../../figs/sweep_multiple_separations_w_polopt/cleo_us_2023/pol_con_not_used"
+)
 if not os.path.exists(fig_folder):
     os.makedirs(fig_folder)
 
@@ -28,11 +28,13 @@ save_figs = False
 save_spectra = False
 
 
+# |%%--%%| <PuEp92P5VV|zj1zyrM71V>
+# data = {(1609.0, 1604.0): data}
 pump_wl_pairs = list(data.keys())
 mean_p_wl = np.mean(pump_wl_pairs[0])
 
 duty_cycles = data[pump_wl_pairs[0]]["params"]["duty_cycles"]
-short_pump_wl_ax = np.array([pump_wl_pair[1] for pump_wl_pair in pump_wl_pairs])
+pump_sep_ax = np.array([np.abs(pair[1] - pair[0]) for pair in pump_wl_pairs])
 num_reps = data[pump_wl_pairs[0]]["params"]["num_sweep_reps"]
 ce_dict = {
     pump_wl_pair: {dc: [] for dc in duty_cycles} for pump_wl_pair in pump_wl_pairs
@@ -77,11 +79,24 @@ for dc_idx, dc in enumerate(duty_cycles):
             np.argmax(ce_dict[pump_wl_pair][dc])
         ]
 mean_sig_wl_at_max_ce = np.mean(sig_wl_at_max_ce, axis=0)
-# |%%--%%| <zj1zyrM71V|HYw7Wi7LKs>
+# ce = ce_dict[(1609.0, 1604.0)][0.2]
+# sig_wl = sig_wl_dict[(1609.0, 1604.0)][0.2]
+# %%
+pumpwl_keys = list(ce_dict.keys())
+plt.plot(sig_wl_dict[pumpwl_keys[-3]][0.1], ce_dict[pumpwl_keys[-3]][0.1])
+# %%
+mean_sig_wl_at_max_ce = np.squeeze(mean_sig_wl_at_max_ce)
+longpumpwl_list = [pumpwl[0] for pumpwl in pump_wl_pairs]
+plt.plot(longpumpwl_list[:-3], mean_sig_wl_at_max_ce[:-3])
+# linear fit up to :-3
+linear_fit = np.polyfit(longpumpwl_list[:-3], mean_sig_wl_at_max_ce[:-3], 1)
+linear_fit_fn = np.poly1d(linear_fit)
+plt.plot(longpumpwl_list[:-3], linear_fit_fn(longpumpwl_list[:-3]))
+# %%
 if save_spectra:
     plt.ioff()
     for pump_wl_pair in pump_wl_pairs:
-        short_pump_wl_ax = np.array([pump_wl_pair[1] for pump_wl_pair in pump_wl_pairs])
+        pump_sep = np.abs(pump_wl_pair[1] - pump_wl_pair[0])
         for dc in duty_cycles:
             # pump_wl_pair_idx = -1
             # dc_idx = 0
@@ -105,20 +120,40 @@ if save_spectra:
     plt.ion()
 # |%%--%%| <HYw7Wi7LKs|VgSaNZXPa6>
 # Specific spectrum to be used
-pump_wl_idx = -1
+pump_wl_idx = 3
 pump_wl_pair = pump_wl_pairs[pump_wl_idx]
-dc_idx = -1
+dc_idx = 0
 dc = duty_cycles[dc_idx]
 rep_num = 0
 spectra = np.array(data[pump_wl_pair]["spectra"][dc])
 idx = np.argmax(ce_dict[pump_wl_pair][dc])
 spectrum = spectra[idx, rep_num, :, :]
+spectrum[1, spectrum[1, :] < -70] = np.nan
 fig, ax = plt.subplots()
 ax.plot(spectrum[0, :], spectrum[1, :])
 ax.set_xlabel("Wavelength (nm)")
 ax.set_ylabel("Power (dBm)")
+ax.set_title(f"Pump WL Pair = {pump_wl_pair}, DC = {dc}, Rep Num = {rep_num}")
 plt.show()
-# |%%--%%| <VgSaNZXPa6|4BT7pF8CVp>
+# |%%--%%| <ZHwRWFGHeg|A8exSCotRy>
+# plot all spectra for a specific separation and rep
+pump_wl_idx = 2
+pump_wl_pair = pump_wl_pairs[pump_wl_idx]
+dc_idx = 0
+dc = duty_cycles[dc_idx]
+rep_num = 0
+spectra = np.array(data[pump_wl_pair]["spectra"][dc])
+fig, ax = plt.subplots()
+for i in range(np.shape(spectra)[0]):
+    spectrum = spectra[i, rep_num, :, :]
+    spectrum[1, spectrum[1, :] < -70] = np.nan
+    ax.plot(spectrum[0, :], spectrum[1, :])
+ax.set_xlabel("Wavelength (nm)")
+ax.set_ylabel("Power (dBm)")
+ax.set_title(f"Pump WL Pair = {pump_wl_pair}, DC = {dc}, Rep Num = {rep_num}")
+plt.show()
+
+# |%%--%%| <VgSaNZXPa6|ZHwRWFGHeg>
 for dc_idx, dc in enumerate(duty_cycles):
     fig, ax = plt.subplots()
     for pump_wl_pair_idx, pump_wl_pair in enumerate(pump_wl_pairs):
@@ -126,7 +161,7 @@ for dc_idx, dc in enumerate(duty_cycles):
             sig_wl_dict[pump_wl_pair][dc],
             ce_dict[pump_wl_pair][dc],
             "o-",
-            label=short_pump_wl_ax[pump_wl_pair_idx],
+            label=pump_sep_ax[pump_wl_pair_idx],
         )
     ax.set_xlabel("Signal Wavelength (nm)")
     ax.set_ylabel(r"CE (dB)")
@@ -137,7 +172,7 @@ for dc_idx, dc in enumerate(duty_cycles):
             os.path.join(fig_folder, f"ce_vs_sig_wl_dc_{dc}.pdf"), bbox_inches="tight"
         )
 
-# |%%--%%| <4BT7pF8CVp|hjzGaspXAv>
+# |%%--%%| <A8exSCotRy|hjzGaspXAv>
 max_ce_vs_pumpsep = np.zeros((len(duty_cycles), len(pump_wl_pairs)))
 plt.rcParams["figure.figsize"] = (16, 11)
 plt.ioff()
@@ -149,7 +184,7 @@ fig, ax = plt.subplots()
 ax2 = ax.twiny()
 for dc_idx, dc in enumerate(duty_cycles):
     ax.plot(
-        short_pump_wl_ax,
+        pump_sep_ax,
         max_ce_vs_pumpsep[dc_idx, :] - ce_offset[dc_idx],
         "o-",
         label=dc,
@@ -159,26 +194,30 @@ ax_ticks = ax.get_xticks()
 ax2.set_xlim(mean_sig_wl_at_max_ce[0], mean_sig_wl_at_max_ce[-1])
 ax2.set_xlabel(r"$\lambda_s$ (nm)")
 ax2.grid(False)
-ax.set_xlabel("Short Pump Wavelength (nm)")
+ax.set_xlabel("Pump Separation (nm)")
 ax.set_ylabel(r"$\eta$ (dB)")
 # ax.set_title("Max CE vs Pump Separation")
 ax.legend(title="Duty Cycle")
 if save_figs:
     fig.savefig(os.path.join(fig_folder, "max_ce_vs_pumpsep.pdf"), bbox_inches="tight")
-# |%%--%%| <hjzGaspXAv|o0ZNR7Dx1u>
+    fig.savefig(
+        "../../../../../papers/cleo_us_2023/figs/max_ce_vs_pumpsep.pdf",
+        bbox_inches="tight",
+    )
+# |%%--%%| <hjzGaspXAv|oj2EO72Fal>
 fig, ax = plt.subplots()
 for dc_idx, dc in enumerate(duty_cycles):
-    ax.plot(short_pump_wl_ax, sig_wl_at_max_ce[dc_idx, :], "o-", label=dc)
+    ax.plot(pump_sep_ax, sig_wl_at_max_ce[dc_idx, :], "o-", label=dc)
 ax.set_xlabel("Pump Separation (nm)")
 ax.set_ylabel(r"$\lambda_s$ at Max CE (nm)")
 ax.set_title(r"$\lambda_s$ vs Pump Separation")
 ax.legend(title="Duty Cycle")
 # linear fit
-linear_fit = np.polyfit(short_pump_wl_ax, mean_sig_wl_at_max_ce, 1)
+linear_fit = np.polyfit(pump_sep_ax, mean_sig_wl_at_max_ce, 1)
 linear_fit_fn = np.poly1d(linear_fit)
 fig, ax = plt.subplots()
-ax.plot(short_pump_wl_ax, mean_sig_wl_at_max_ce, "o-", label="Data")
-ax.plot(short_pump_wl_ax, linear_fit_fn(short_pump_wl_ax), label="Linear Fit")
+ax.plot(pump_sep_ax, mean_sig_wl_at_max_ce, "o-", label="Data")
+ax.plot(pump_sep_ax, linear_fit_fn(pump_sep_ax), label="Linear Fit")
 ax.set_xlabel("Pump Separation (nm)")
 ax.set_ylabel(r"$\lambda_s$ at Max CE (nm)")
 ax.set_title(r"$\lambda_s$ vs Pump Separation, linear fit on mean of all DC")
@@ -188,5 +227,4 @@ if save_figs:
         os.path.join(fig_folder, "mean_sig_wl_at_max_ce_vs_pumpsep.pdf"),
         bbox_inches="tight",
     )
-# np.savetxt(f"./fits/mean_pumpwl_{mean_p_wl}nm.txt", linear_fit)
-# np.savetxt(f"./fits/moving_pump_wl_dist_10nm.txt", linear_fit)
+np.savetxt(f"./fits/modelocked_1571_pump_fit.txt", linear_fit)

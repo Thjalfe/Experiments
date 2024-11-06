@@ -1,3 +1,4 @@
+# %%
 import pickle
 import os
 import re
@@ -5,8 +6,8 @@ import glob
 from collections import OrderedDict
 
 # directory = "../data/modelocked_1571_pump/cw_pumps_to_find_phasematch/"
-directory = "../data/sweep_multiple_separations_w_polopt/pol_opt_auto/tisa_sweep_around_opt/moving_pumpwl_mean/pump_wl_dist=10.0nm"
-directory = "../data/4MSI/tisa_sweep_to_find_opt/pump_modes=02_equal_input_pump_p"
+directory = r"C:\Users\FTNK-FOD\Desktop\Thjalfe\Experiments\IM-FWM\pump_separation\data\4MSI\tisa_sweep_to_find_opt\sig_idler_modes=01_equal_input_pump_p"
+directory = r"C:\Users\FTNK-FOD\Desktop\Thjalfe\Experiments\IM-FWM\pump_separation\data\4MSI\tisa_sweep_to_find_opt\pump_modes=21_skewed_input_pump_p"
 files = glob.glob(f"{os.path.join(directory, '*.pkl')}")
 merged_data = {}
 for filename in files:
