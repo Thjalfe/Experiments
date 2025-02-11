@@ -20,7 +20,13 @@ from matplotlib.ticker import MaxNLocator
 plt.style.use("custom")
 figsize = (11, 7)
 plt.rcParams["figure.figsize"] = figsize
+<<<<<<< HEAD
 plt.rcParams["text.latex.preamble"] = r"\usepackage{upgreek}\usepackage{amsmath}"
+=======
+plt.rcParams["text.latex.preamble"] = (
+    r"\usepackage{upgreek}\usepackage{amsmath}\usepackage{newtxtext}\usepackage{newtxmath}\usepackage{courier}\usepackage{helvet}"
+)
+>>>>>>> refs/remotes/origin/master
 save_figs = True
 # plt.rcParams["font.family"] = "serif"
 plt.rcParams["legend.fontsize"] = 24
@@ -53,7 +59,11 @@ stds = stds * 100
 
 
 # Now applying filtering/windows on the raw data, more correct processing
+<<<<<<< HEAD
 ignore_idxs = [5]
+=======
+ignore_idxs = [5, 6]
+>>>>>>> refs/remotes/origin/master
 num_avg = len(data[pump_wls_tuple[0]]) - 1
 data_filtered = np.zeros(
     (
@@ -122,6 +132,7 @@ data_filtered_mean = np.nanmean(data_filtered, axis=(0, 1))
 data_filtered_std = np.nanstd(data_filtered, axis=(0, 1))
 idler_peaks_mean = np.nanmean(idler_peaks, axis=1)
 idler_peaks_std = np.nanstd(idler_peaks, axis=1)
+<<<<<<< HEAD
 max_val_log = 10 * np.log10(np.max(data_filtered_mean))
 fig, ax = plt.subplots()
 ax = cast(Axes, ax)
@@ -134,6 +145,18 @@ ax.fill_between(
     color="grey",
     alpha=1,
     zorder=10,
+=======
+fig, ax = plt.subplots()
+ax = cast(Axes, ax)
+fig = cast(Figure, fig)
+ax.plot(wl_ax, np.log10(data_filtered_mean), color="k")
+ax.fill_between(
+    wl_ax,
+    np.log10(data_filtered_mean - data_filtered_std),
+    np.log10(data_filtered_mean + data_filtered_std),
+    color="k",
+    alpha=0.3,
+>>>>>>> refs/remotes/origin/master
 )
 col_count = -1
 for i, idler_peak in enumerate(idler_peaks_mean):
@@ -141,6 +164,7 @@ for i, idler_peak in enumerate(idler_peaks_mean):
     col_count += 1
     if col_count == len(idler_peaks_mean) - 1:
         col_count += 1  # last color does not work well with this plot
+<<<<<<< HEAD
     ax.plot(
         idler_peak_wls[i],
         10 * np.log10(idler_peak) - max_val_log,
@@ -160,12 +184,32 @@ ax.set_xlim(963.84, 981.43)  # Limits taken ce_vs_detuning_w-classical_lambda_x_
 ax.set_xlabel("Wavelength [nm]")
 # ax.set_ylabel(r"10$\cdot$log$_{10}$(Counts)")
 ax.set_ylabel("Rel. flux [dB]")
+=======
+    ax.plot(idler_peak_wls[i], np.log10(idler_peak), color=colors[col_count])
+    ax.fill_between(
+        idler_peak_wls[i],
+        np.log10(idler_peak - idler_peaks_std[i]),
+        np.log10(idler_peak + idler_peaks_std[i]),
+        color=colors[col_count],
+        alpha=0.5,
+    )
+ax.set_ylim(0.5, 5)
+# fig.subplots_adjust(left=0.2)
+ax.set_xlim(np.min(idler_wls) - 1, np.max(idler_wls) + 1)
+ax.set_xlabel("Wavelength [nm]")
+# ax.set_ylabel(r"10$\cdot$log$_{10}$(Counts)")
+ax.set_ylabel("Counts (log)")
+>>>>>>> refs/remotes/origin/master
 ax.yaxis.set_label_coords(-0.118, 0.5)
 # fig.tight_layout()
 
 if save_figs:
     fig.savefig(f"{paper_dir}/filtered_spectra_log.pdf", bbox_inches="tight")
+<<<<<<< HEAD
 # |%%--%%| <gDzQ5NGXwo|zP0Jz79S0T>
+=======
+# |%%--%%| <tvdqBA7yyQ|zP0Jz79S0T>
+>>>>>>> refs/remotes/origin/master
 
 
 pump_wl_ref = pump_wls_tuple[7]

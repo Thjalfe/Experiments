@@ -24,9 +24,12 @@ for i in range(spectra.shape[1]):
     ax.plot(wls, spectra[:, i])
 
 spec_percentage = (1 - spectra_lin[:, -1]) * 100
+<<<<<<< HEAD
 lpg_data = np.array([wls, spec_percentage])
 with open("./LP11_TMSI/LPG_T_3_1600_0.6dB/LPGspec_percentage.csv", "w") as f:
     np.savetxt(f, lpg_data, delimiter=",")
+=======
+>>>>>>> refs/remotes/origin/master
 fig, ax = plt.subplots()
 ax = cast(Axes, ax)
 fig = cast(Figure, fig)

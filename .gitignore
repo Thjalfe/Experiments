@@ -64,6 +64,7 @@ LPG/LP11_TMSI/LPG_T_3_1600_0.6dB/LPGlog.csv
 LPG/LP11_TMSI/LPG_T_3_1600_0.6dB/LPGspectra.csv
 LPG/LP11_TMSI/LPG_T_3_1600_0.6dB/Reference_LPG.csv
 filter_char/data
+<<<<<<< HEAD
 .gitignore-thjalfe-desktop-2
 IM-FWM/QD/classical_check/run_sweep_funcs.py
 IM-FWM/QD/classical_check/__init__.py
@@ -78,3 +79,5 @@ IM-FWM/QD/data_processing/plot_for_paper/__pycache__
 IM-FWM/QD/hvad_vil_vi_lave.txt
 IM-FWM/pump_separation/pumps.csv
 LPG/LP11_TMSI/LPG_T_3_1600_0.6dB
+=======
+>>>>>>> refs/remotes/origin/master

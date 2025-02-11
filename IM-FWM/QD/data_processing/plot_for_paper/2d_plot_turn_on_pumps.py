@@ -1,5 +1,8 @@
 import numpy as np
+<<<<<<< HEAD
 from functools import partial
+=======
+>>>>>>> refs/remotes/origin/master
 import matplotlib.pyplot as plt
 from typing import cast
 import pandas as pd
@@ -18,7 +21,11 @@ plt.rcParams["text.latex.preamble"] = (
     r"\usepackage{upgreek}\usepackage{amsmath}\usepackage{newtxtext}\usepackage{newtxmath}\usepackage{courier}\usepackage{helvet}"
 )
 save_figs = False
+<<<<<<< HEAD
 # plt.rcParams["font.family"] = "serif"
+=======
+plt.rcParams["font.family"] = "serif"
+>>>>>>> refs/remotes/origin/master
 plt.rcParams["legend.fontsize"] = 24
 plt.rcParams["axes.labelsize"] = 48
 plt.rcParams["xtick.labelsize"] = 38
@@ -45,6 +52,13 @@ data = data - full_background
 data[data <= 0] = np.min(np.abs(data[data > 0]))
 
 
+<<<<<<< HEAD
+=======
+def wl_ax_to_thz(wl, c=299792458):
+    return c / (wl * 1e-9) / 1e12
+
+
+>>>>>>> refs/remotes/origin/master
 def wl_ax_to_thz_diff(wl, center_wl, c=299792458):
     wl = wl * 1e-9
     center_wl = center_wl * 1e-9
@@ -53,6 +67,7 @@ def wl_ax_to_thz_diff(wl, center_wl, c=299792458):
     return center_thz - thz
 
 
+<<<<<<< HEAD
 def thz_to_wls(thz, thz_sep, idler_wls):
     poly_coeffs = np.polyfit(thz_sep, idler_wls, 1)
     poly = np.poly1d(poly_coeffs)
@@ -63,6 +78,14 @@ def wls_to_thz(wls, thz_sep, idler_wls):
     poly_coeffs = np.polyfit(idler_wls, thz_sep, 1)
     poly = np.poly1d(poly_coeffs)
     return poly(wls)
+=======
+def thz_diff_to_wl_ax(thz_diff, center_wl, c=299792458):
+    center_wl = center_wl * 1e-9
+    center_thz = c / center_wl / 1e12
+    thz_diff = thz_diff + center_thz
+    wl = c / (thz_diff * 1e12)
+    return wl[::-1] * 1e9
+>>>>>>> refs/remotes/origin/master
 
 
 x = wls
@@ -84,6 +107,7 @@ ax = cast(Axes, ax)
 fig = cast(Figure, fig)
 im = ax.pcolormesh(X, Y, data, cmap="viridis", vmin=0, vmax=200, rasterized=True)
 ax.set_xlim(970.5, 973)
+<<<<<<< HEAD
 wl_idxs_within_range = np.where((wls >= 970.5) & (wls <= 973))[0]
 thz_diff = -wl_ax_to_thz_diff(wls[wl_idxs_within_range], signal_wl)
 wls_within_range = wls[wl_idxs_within_range]
@@ -96,6 +120,18 @@ secax = ax.secondary_xaxis(
 )
 secax.set_xlabel(r"$\nu-\nu_\mathrm{s}$ [THz]", labelpad=10)
 secax.xaxis.set_major_locator(MaxNLocator(nbins=5, integer=True))
+=======
+secax = ax.secondary_xaxis(
+    "top",
+    functions=(
+        lambda wl: wl_ax_to_thz_diff(wl, signal_wl),  # Wavelength to THz conversion
+        lambda thz_diff: -thz_diff_to_wl_ax(
+            thz_diff, signal_wl
+        ),  # THz to Wavelength conversion
+    ),
+)
+secax.set_xlabel(r"$\nu_\mathrm{s}-\nu$ [THz]", labelpad=10)
+>>>>>>> refs/remotes/origin/master
 ax.grid(False)
 ax.set_ylim(0, 1)
 ax.set_xlabel("Wavelength [nm]")
