@@ -286,7 +286,7 @@ def sweep_tisa_and_save(
                 max_peak_min_height,
                 sortpeaksby,
             )
-# Set the new wavelength for TiSa
+        # Set the new wavelength for TiSa
         TiSa.set_wavelength(sig_start, OSA_GPIB_num=OSA_GPIB_num)
 
 
@@ -319,21 +319,7 @@ def run_tisa_sweep_all_pump_wls(
     sweep_pumps=True,
     sig_start_external=False,
 ):
-    """
-    Run the main loop of the experiment and send an email notification upon completion or error.
-
-    Args:
-        data_folder (str): The path to the data folder.
-        ando1_wl (list): List of wavelengths for Ando1.
-        ando2_wl (list): List of wavelengths for Ando2.
-        equal_pump_power (bool): If True, make the pump power equal.
-        log_pm (bool): If True, log the power meter data.
-        num_sweeps (int): Number of sweeps to perform.
-        del_wl (float): Delta wavelength for TiSa.
-        wl_tot (float): Total wavelength range for the signal.
-        sig_start(float or list): Start wavelength for TiSa, can be list if  we want to set it manually. Mainly done when trying to redo measurements from earlier.
-        GPIB_val (int, optional): GPIB value for the OSA. Defaults to 19.
-    """
+    """ """
     if make_new_folder_iter:
         data_folder = new_data_folder(data_folder)
     osa = OSA(
@@ -412,21 +398,7 @@ def run_tisa_sweep_single_pump_wl(
     make_new_folder_iter=True,
     sig_start_external=False,
 ):
-    """
-    Run the main loop of the experiment and send an email notification upon completion or error.
-
-    Args:
-        data_folder (str): The path to the data folder.
-        ando1_wl (list): List of wavelengths for Ando1.
-        ando2_wl (list): List of wavelengths for Ando2.
-        equal_pump_power (bool): If True, make the pump power equal.
-        log_pm (bool): If True, log the power meter data.
-        num_sweeps (int): Number of sweeps to perform.
-        del_wl (float): Delta wavelength for TiSa.
-        wl_tot (float): Total wavelength range for the signal.
-        sig_start(float or list): Start wavelength for TiSa, can be list if  we want to set it manually. Mainly done when trying to redo measurements from earlier.
-        GPIB_val (int, optional): GPIB value for the OSA. Defaults to 19.
-    """
+    """ """
     if make_new_folder_iter:
         data_folder = new_data_folder(data_folder)
     osa = OSA(

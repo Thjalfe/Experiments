@@ -76,6 +76,6 @@ def get_subfolders(folder_path):
         if os.path.isdir(subfolder_path):
             if not subfolder_path.endswith("/"):
                 subfolder_path += "/"
-            if re.fullmatch(r'\d+', dir):
+            if re.fullmatch(r"\d+", dir):
                 subfolders.append(subfolder_path)
     return subfolders

@@ -16,7 +16,7 @@ from laser_control import AndoLaser, TiSapphire
 from verdi_laser import VerdiLaser
 from amonics_edfa import EDFA
 from picoscope2000 import PicoScope2000a
-from thorlabs_mpc320 import ThorlabsMPC320, optimize_multiple_pol_cons
+from pol_cons import ThorlabsMPC320, optimize_multiple_pol_cons
 from arduino_pm import ArduinoADC
 from tektronix_oscilloscope import TektronixOscilloscope
 from ipg_edfa import IPGEDFA
@@ -48,8 +48,8 @@ ando2 = AndoLaser(ando2_start, GPIB_address=24, power=10)
 time.sleep(0.1)
 ando1.laser_on()
 ando2.laser_on()
-TiSa = TiSapphire(3)
-verdi = VerdiLaser(com_port=4)
+# TiSa = TiSapphire(3)
+# verdi = VerdiLaser(com_port=4)
 osa = OSA(
     970,
     979,

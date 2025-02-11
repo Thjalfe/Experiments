@@ -268,7 +268,7 @@ ax.set_ylabel("Norm. power")
 fig.tight_layout()
 ax.legend(fontsize=32)
 fig.savefig(
-    f"{fig_path_cleous2024}/mean_pump_idler_pulses_normalized_w_std.pdf",
+    f"{fig_loc_cleous2024}/mean_pump_idler_pulses_normalized_w_std.pdf",
     bbox_inches="tight",
 )
 if save_figs:
@@ -318,7 +318,7 @@ for i, duty_cycle in enumerate(duty_cycles):
     # ax.set_title(f"Frequency={freq}, Duty Cycle: {duty_cycle}")
 ax.legend(title="Duty Cycle", fontsize=32)
 fig.tight_layout()
-fig.savefig(f"{fig_path_cleous2024}/diff_duty_cycles.pdf", bbox_inches="tight")
+fig.savefig(f"{fig_loc_cleous2024}/diff_duty_cycles.pdf", bbox_inches="tight")
 if save_figs:
     fig.savefig(f"{fig_path}rep_rate_{freq}_diff_duty_cycles.pdf", bbox_inches="tight")
     fig.savefig(

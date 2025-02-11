@@ -25,7 +25,7 @@ def turn_off_all_lasers(
     amplifiers: List[object],
 ):
     for laser in lasers:
-        laser.laser_off()
+        laser.disable()
     verdi.shutter = 0
     for amp in amplifiers:
         amp.shutter = 0
