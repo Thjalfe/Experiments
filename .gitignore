@@ -81,3 +81,9 @@ IM-FWM/pump_separation/pumps.csv
 LPG/LP11_TMSI/LPG_T_3_1600_0.6dB
 =======
 >>>>>>> refs/remotes/origin/master
+IM-FWM/OD_large_sep_using_superK/data/tisa_pump_superk_spectra
+IM-FWM/OD_large_separation/__pycache__
+IM-FWM/OD_large_separation/data
+IM-FWM/OD_large_separation/simulation_res
+IM-FWM/OD_large_separation/tmp_plots/telecom-wl=1580.0nm
+superk_filter_setup/data

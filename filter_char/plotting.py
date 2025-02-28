@@ -69,21 +69,25 @@ edmund_1100_SP = pd.read_excel(
 )
 edmund_1100_SP["OD"] = -np.log10(edmund_1100_SP["Transmission (%)"] / 100)
 fig, ax = plt.subplots()
-ax.plot(edmund_1300_SP["Wavelength (nm)"], edmund_1300_SP["OD"], label="1300SP")
-ax.plot(edmund_1200_SP["Wavelength (nm)"], edmund_1200_SP["OD"], label="1200SP")
-ax.plot(edmund_1100_SP["Wavelength (nm)"], edmund_1100_SP["OD"], label="1100SP")
-ax.set_xlim(700, 2000)
+ax.plot(
+    edmund_1300_SP["Wavelength (nm)"], edmund_1300_SP["OD"], label="1300SP", zorder=11
+)
+# ax.plot(edmund_1200_SP["Wavelength (nm)"], edmund_1200_SP["OD"], label="1200SP")
+# ax.plot(edmund_1100_SP["Wavelength (nm)"], edmund_1100_SP["OD"], label="1100SP")
+ax.set_xlim(1200, 1900)
 ax.set_ylim(0, 10)
-ax.fill_between(
-    [1535, 1612], 0, 10, color="gray", alpha=0.5, label="C+L band amps", zorder=10
+# ax.fill_between(
+#     [1535, 1612], 0, 10, color="gray", alpha=0.5, label="C+L band amps", zorder=10
+# )
+ax.fill_between([1570, 1611], 0, 10, color="k", alpha=0.5, zorder=10)
+# ax.legend()
+ax.set_xlabel("Wavelength [nm]")
+ax.set_ylabel("Optical Density")
+# ax.set_title("Optical Density of Edmund Optics SP filters")
+fig.save_figs(
+    "../../papers/FC_QD_supplementary/figs/edmund_optics_SP_filter.pdf",
+    bbox_inches="tight",
 )
-ax.fill_between(
-    [1600, 1612], 0, 10, color="k", alpha=0.7, label="Probable pump area", zorder=10
-)
-ax.legend()
-ax.set_xlabel("Wavelength (nm)")
-ax.set_ylabel("OD")
-ax.set_title("Optical Density of Edmund Optics SP filters")
 plt.show()
 # |%%--%%| <LUapmCQQb3|WZIY23TXas>
 bandpass = pd.read_excel("./data/FBH950-10.xlsx", skiprows=0)

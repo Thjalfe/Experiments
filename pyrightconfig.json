@@ -7,6 +7,6 @@
         "**/__pycache__"
     ],
     "extraPaths": [
-        "../Experiments/InstrumentControl/InstrumentControl/LabInstruments/"
+        "/home/thjalfe/Documents/PhD/Projects/InstrumentControl/InstrumentControl/LabInstruments/"
     ]
 }
