@@ -87,3 +87,5 @@ IM-FWM/OD_large_separation/data
 IM-FWM/OD_large_separation/simulation_res
 IM-FWM/OD_large_separation/tmp_plots/telecom-wl=1580.0nm
 superk_filter_setup/data
+external_stay/data
+external_stay/processing/__pycache__

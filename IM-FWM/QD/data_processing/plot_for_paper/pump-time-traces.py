@@ -3,6 +3,9 @@ from typing import cast
 
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib
+
+matplotlib.use("Qt5Agg")
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from plot_for_paper.time_trace_funcs import overlap_pulses_multiple_duty_cycles
@@ -69,9 +72,10 @@ for dc in duty_cycles_processed:
         alpha=0.5,
     )
 # ax.set_title(title_str)
-ax.set_xlabel(r"Time [$\mu$s]")
+ax.set_xlabel(r"Time [$\upmu$s]")
 ax.set_ylabel("Voltage [V]")
 ax.legend(title="Duty cycle")
+# fig.savefig(f"traces.pdf")
 plt.show()
 # |%%--%%| <Jtdb0IR7wP|62urEvoFaX>
 # Raw traces
@@ -79,7 +83,7 @@ idx = 0
 fig, ax = plt.subplots()
 ax = cast(Axes, ax)
 ax.plot(time[idx] * 1e6, voltage[idx])
-ax.set_xlabel(r"Time [$\mu$s]")
+ax.set_xlabel(r"Time [$\upmu$s]")
 ax.set_ylabel("Voltage [V]")
 ax.set_title(f"Raw trace for duty cycle {duty_cycles[idx]}")
 plt.show()

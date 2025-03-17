@@ -69,7 +69,6 @@ def exp_decay_bunching(t: np.ndarray, *beta: float) -> np.ndarray:
     )
 
 
-<<<<<<< HEAD
 def exp_decay(t: np.ndarray, *beta: float) -> np.ndarray:
     a = beta[0]
     b = beta[1]
@@ -82,23 +81,13 @@ def nlinfit(
     time: np.ndarray,
     hist_norm: np.ndarray,
     fit_fun: Callable,
-=======
-def nlinfit(
-    time: np.ndarray,
-    hist_norm: np.ndarray,
-    modelfun: Callable,
->>>>>>> refs/remotes/origin/master
     beta0: list[float],
     weights: np.ndarray,
     max_iter: int = 10000,
     bounds: tuple[list, list] = ([], []),
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     opt_result, cov_matrix = curve_fit(
-<<<<<<< HEAD
         fit_fun,
-=======
-        modelfun,
->>>>>>> refs/remotes/origin/master
         time,
         hist_norm,
         p0=beta0,
@@ -106,28 +95,18 @@ def nlinfit(
         maxfev=max_iter,
         bounds=bounds,
     )
-<<<<<<< HEAD
     residuals = hist_norm - fit_fun(time, *opt_result)
-=======
-    residuals = hist_norm - modelfun(time, *opt_result)
->>>>>>> refs/remotes/origin/master
     J = np.zeros((len(time), len(opt_result)))
     eps = np.sqrt(np.finfo(float).eps)
     for i in range(len(opt_result)):
         delta = np.zeros_like(opt_result)
         delta[i] = eps
         J[:, i] = (
-<<<<<<< HEAD
             fit_fun(time, *(opt_result + delta)) - fit_fun(time, *(opt_result - delta))
-=======
-            modelfun(time, *(opt_result + delta))
-            - modelfun(time, *(opt_result - delta))
->>>>>>> refs/remotes/origin/master
         ) / (2 * eps)
     return opt_result, residuals, J, cov_matrix
 
 
-<<<<<<< HEAD
 def cw_g2(
     time: np.ndarray,
     hist_norm: np.ndarray,
@@ -135,13 +114,6 @@ def cw_g2(
     initial_guess: list[float] = [1, 1, 0.5, 1, 50],
     fit_fun: Callable = exp_decay_bunching,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, float]:
-=======
-def cw_g2_bunching(
-    time: np.ndarray, hist_norm: np.ndarray, weights: np.ndarray | None = None
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, float]:
-    initial_guess = [1.25, 1.561, 0.253, 0.9052, 52.81]
-    initial_guess = [1, 1, 0.5, 1, 50]
->>>>>>> refs/remotes/origin/master
     if weights is None:
         weights = np.ones_like(hist_norm)
     bounds = ([], [])
@@ -149,22 +121,14 @@ def cw_g2_bunching(
     fit_result, residuals, jacobian, cov_matrix = nlinfit(
         time,
         hist_norm,
-<<<<<<< HEAD
         fit_fun,
-=======
-        exp_decay_bunching,
->>>>>>> refs/remotes/origin/master
         initial_guess,
         weights,
         max_iter=max_iter,
         bounds=bounds,
     )
     std = np.sqrt(np.diag(cov_matrix))
-<<<<<<< HEAD
     norm_val = np.max(fit_fun(np.linspace(-1000, 1000, 2000), *fit_result))
-=======
-    norm_val = np.max(exp_decay_bunching(np.linspace(-1000, 1000, 2000), *fit_result))
->>>>>>> refs/remotes/origin/master
     return fit_result, residuals, jacobian, cov_matrix, std, norm_val
 
 

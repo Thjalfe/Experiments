@@ -21,12 +21,12 @@ plt.rcParams["figure.figsize"] = figsize
 plt.rcParams["text.latex.preamble"] = r"\usepackage{upgreek}\usepackage{amsmath}"
 # plt.rcParams["font.family"] = "serif"
 plt.rcParams["legend.fontsize"] = 24
-plt.rcParams["axes.labelsize"] = 48
-plt.rcParams["xtick.labelsize"] = 38
-plt.rcParams["ytick.labelsize"] = 38
+plt.rcParams["axes.labelsize"] = 36
+plt.rcParams["xtick.labelsize"] = 30
+plt.rcParams["ytick.labelsize"] = 30
 plt.rcParams["legend.title_fontsize"] = 28
 
-paper_dir = "/home/thjalfe/Documents/PhD/Projects/papers/FC_QD/figs"
+paper_dir = "/home/thjalfe/Documents/PhD/Projects/papers/FC_QD_less_technical/figs"
 
 data_dir = "../../data/"
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]  # type: ignore
@@ -62,7 +62,7 @@ for spec_num in idxs_to_loop_over:
     )
     ax.set_ylim(min_val_in_range, 1)
     ax.set_xlabel("Wavelength [nm]")
-    ax.set_ylabel("Rel. power [dB]")
+    ax.set_ylabel("Power [dB]")
 
     fig, ax = plt.subplots()
 
@@ -79,8 +79,27 @@ for spec_num in idxs_to_loop_over:
     )
     ax.set_ylim(min_val_in_range, 1)
     ax.set_xlabel("Wavelength [nm]")
-    ax.set_ylabel("Rel. power [dB]")
+    ax.set_ylabel("Power [dB]")
 ax.yaxis.set_major_locator(MaxNLocator(integer=True, nbins=6))
+ax.text(
+    -0.18,
+    1.06,
+    r"\textbf{a})",
+    transform=ax.transAxes,
+    fontsize=36,
+    va="top",
+    ha="left",
+)
+ax.text(
+    -0.18,
+    -0.15,
+    r"\textbf{c})",
+    transform=ax.transAxes,
+    fontsize=36,
+    va="top",
+    ha="left",
+)
+
 if save_figs:
     fig.savefig(f"{paper_dir}/pump_spectra.pdf", bbox_inches="tight")
 image1 = mpimg.imread(f"{paper_dir}/mode_images/LP01_inverted_transparent.png")
@@ -113,5 +132,15 @@ ax.annotate(
 )
 ax.add_artist(image1_ab)
 ax.add_artist(image2_ab)
+ax.text(
+    -0.18,
+    1.06,
+    r"\textbf{b})",
+    transform=ax.transAxes,
+    fontsize=36,
+    va="top",
+    ha="left",
+)
+
 if save_figs:
     fig.savefig(f"{paper_dir}/lpg_spec.pdf", bbox_inches="tight")

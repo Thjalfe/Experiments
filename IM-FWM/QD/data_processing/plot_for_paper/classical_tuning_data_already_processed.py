@@ -22,12 +22,12 @@ plt.rcParams["figure.figsize"] = figsize
 plt.rcParams["text.latex.preamble"] = r"\usepackage{upgreek}\usepackage{amsmath}"
 # plt.rcParams["font.family"] = "serif"
 plt.rcParams["legend.fontsize"] = 24
-plt.rcParams["axes.labelsize"] = 48
-plt.rcParams["xtick.labelsize"] = 38
-plt.rcParams["ytick.labelsize"] = 38
+plt.rcParams["axes.labelsize"] = 36
+plt.rcParams["xtick.labelsize"] = 30
+plt.rcParams["ytick.labelsize"] = 30
 plt.rcParams["legend.title_fontsize"] = 28
 
-paper_dir = "/home/thjalfe/Documents/PhD/Projects/papers/FC_QD/figs"
+paper_dir = "/home/thjalfe/Documents/PhD/Projects/papers/FC_QD_less_technical/figs"
 
 data_dir = "../../data/"
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]  # type: ignore
@@ -149,6 +149,16 @@ fig6, ax6 = plot_ce_vs_detuning_wl_bottom_ax(
     extra_data_ce_mean=extra_data_ce_mean_lin,
 )
 ax6.set_xlim(np.min(idler_wls) - 0.2, np.max(idler_wls) + 0.1)
+ax6.text(
+    -0.18,
+    1.06,
+    r"\textbf{b})",
+    transform=ax6.transAxes,
+    fontsize=36,
+    va="top",
+    ha="left",
+)
+
 if save_figs:
     fig6.savefig(
         f"{paper_dir}/ce_vs_detuning_w-classical_lambda_x_ax.pdf", bbox_inches="tight"

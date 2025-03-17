@@ -1,13 +1,9 @@
 import numpy as np
-<<<<<<< HEAD
 
 try:
     from .utils import find_idler_wl_approx
 except ImportError:
     from utils import find_idler_wl_approx
-=======
-from .utils import find_idler_wl_approx
->>>>>>> refs/remotes/origin/master
 
 
 def mean_std_data(data_dict: dict) -> dict:

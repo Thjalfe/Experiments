@@ -11,12 +11,8 @@ from funcs.g2_processing import (
     find_bunching_ratio_from_ref,
     simple_weighting_around_dip,
     exp_decay_bunching,
-<<<<<<< HEAD
     exp_decay,
     cw_g2,
-=======
-    cw_g2_bunching,
->>>>>>> refs/remotes/origin/master
     # plot_g2,
 )
 import numpy as np
@@ -27,13 +23,7 @@ plt.style.use("custom")
 plt.style.use("custom")
 figsize = (11, 8)
 plt.rcParams["figure.figsize"] = figsize
-<<<<<<< HEAD
 plt.rcParams["text.latex.preamble"] = r"\usepackage{upgreek}\usepackage{amsmath}"
-=======
-plt.rcParams["text.latex.preamble"] = (
-    r"\usepackage{upgreek}\usepackage{amsmath}\usepackage{newtxtext}\usepackage{newtxmath}\usepackage{courier}\usepackage{helvet}"
-)
->>>>>>> refs/remotes/origin/master
 save_figs = True
 # plt.rcParams["font.family"] = "serif"
 plt.rcParams["legend.fontsize"] = 24
@@ -42,11 +32,7 @@ plt.rcParams["xtick.labelsize"] = 36
 plt.rcParams["ytick.labelsize"] = 36
 plt.rcParams["legend.title_fontsize"] = 28
 
-paper_dir = "/home/thjalfe/Documents/PhD/Projects/papers/FC_QD/figs"
-<<<<<<< HEAD
-=======
-save_figs = True
->>>>>>> refs/remotes/origin/master
+paper_dir = "/home/thjalfe/Documents/PhD/Projects/papers/FC_QD_less_technical/figs"
 ref_file_name = (
     "../../data/TT_g2/ref/Bidir_hist_2024-09-25_CW_p-shell_971p22nm_13p3mW.txt"
 )
@@ -69,33 +55,21 @@ normalized_idler_data, idler_norm_factor = normalize_data(idler_data, 4)
 
 normalized_idler_data[:, 1] = normalized_idler_data[:, 1] / ref_bunching_diff
 
-<<<<<<< HEAD
 normalized_idler_data_copy = normalized_idler_data.copy()
-=======
->>>>>>> refs/remotes/origin/master
 
 sample_factor_ref = 8
 sample_factor = 2
 
 
-<<<<<<< HEAD
 weight = 0.15
 # weight = 1
 center_range = 750
 center_range = 400
-=======
-weight = 0.1
-# weight = 1
-center_range = 750
->>>>>>> refs/remotes/origin/master
 # center_range = 1050
 # center_range = 2000
 normalized_ref_data = downsample_by_n(normalized_ref_data, sample_factor_ref)
 weights = simple_weighting_around_dip(normalized_ref_data, center_range, weight)
-<<<<<<< HEAD
 weights = np.ones_like(normalized_ref_data[:, 0])
-=======
->>>>>>> refs/remotes/origin/master
 (
     fit_result_ref,
     residuals_ref,
@@ -103,13 +77,7 @@ weights = np.ones_like(normalized_ref_data[:, 0])
     cov_matrix_ref,
     std_ref,
     norm_val_ref,
-<<<<<<< HEAD
 ) = cw_g2(normalized_ref_data[:, 0], normalized_ref_data[:, 1], weights=weights)
-=======
-) = cw_g2_bunching(
-    normalized_ref_data[:, 0], normalized_ref_data[:, 1], weights=weights
-)
->>>>>>> refs/remotes/origin/master
 # remove_idx_ref = np.logical_or(
 #     normalized_ref_data[:, 0] < -20, normalized_ref_data[:, 0] > 20
 # )
@@ -232,7 +200,6 @@ ax_ref.add_patch(rect)
 if save_figs:
     fig_ref.set_size_inches(11, 8)
     fig_ref.savefig(f"{paper_dir}/ref_g2_full_window.pdf", bbox_inches="tight")
-<<<<<<< HEAD
 # |%%--%%| <u1NkIYrUHu|SvlPBjlgoo>
 
 center_range_idler = 147  # 147
@@ -260,12 +227,6 @@ def cases(case):
 fit_fun, weights, initial_guess = cases(1)
 # weights = np.ones_like(normalized_idler_data[:, 0])
 
-=======
-
-center_range_idler = 147  # 147
-normalized_idler_data = downsample_by_n(normalized_idler_data, sample_factor)
-weights = simple_weighting_around_dip(normalized_idler_data, center_range_idler, weight)
->>>>>>> refs/remotes/origin/master
 (
     fit_result_idler,
     residuals_idler,
@@ -273,17 +234,12 @@ weights = simple_weighting_around_dip(normalized_idler_data, center_range_idler,
     cov_matrix_idler,
     ci_idler,
     norm_val_idler,
-<<<<<<< HEAD
 ) = cw_g2(
     normalized_idler_data[:, 0],
     normalized_idler_data[:, 1],
     initial_guess=initial_guess,
     weights=weights,
     fit_fun=fit_fun,
-=======
-) = cw_g2_bunching(
-    normalized_idler_data[:, 0], normalized_idler_data[:, 1], weights=weights
->>>>>>> refs/remotes/origin/master
 )
 new_x_ax_idler = np.linspace(
     np.min(normalized_idler_data[:, 0]),
@@ -296,11 +252,7 @@ fig_idler, ax_idler = plot_g2(
     normalized_idler_data[:, 1],
     fit_result_idler,
     ci_idler,
-<<<<<<< HEAD
     fit_fun,
-=======
-    exp_decay_bunching,
->>>>>>> refs/remotes/origin/master
     markerstyle="o",
     markersize=4,
     plot_confidence=False,
@@ -316,7 +268,6 @@ fig_idler.set_size_inches(11, 4)
 if save_figs:
     fig_idler.savefig(f"{paper_dir}/idler_g2.pdf", bbox_inches="tight")
 
-<<<<<<< HEAD
 print(
     f"g2 ref: {1-fit_result_ref[0]+fit_result_ref[2]:.2f}+-{np.sqrt(std_ref[0]**2+std_ref[2]**2):.3f}"
 )
@@ -401,18 +352,13 @@ g2[g2 > 1] = np.nan
 
 
 # |%%--%%| <xBVueJYauK|c408qMx6fR>
-=======
-plt.close()
-print(
-    f"g2 ref: {1-fit_result_ref[0]+fit_result_ref[2]:.2f}+-{np.sqrt(std_ref[0]**2+std_ref[2]**2):.2f}"
-)
-print(
-    f"g2 idler: {1-fit_result_idler[0]+fit_result_idler[2]:.3f}+-{np.sqrt(ci_idler[0]**2+ci_idler[2]**2):.3f}"
-)
+plt.rcParams["legend.fontsize"] = 24
+plt.rcParams["axes.labelsize"] = 36
+plt.rcParams["xtick.labelsize"] = 30
+plt.rcParams["ytick.labelsize"] = 30
+plt.rcParams["legend.title_fontsize"] = 28
 
 
-# |%%--%%| <BQ2l6UxuvO|c408qMx6fR>
->>>>>>> refs/remotes/origin/master
 def plot_g2_subplot(
     time_ref: np.ndarray,
     time_ref_fit: np.ndarray,
@@ -521,27 +467,27 @@ fig_both, ax_both_1, ax_both_2, ax_both_3 = plot_g2_subplot(
 ax_both_1.text(
     -0.18,
     1.06,
-    r"\textbf{a}",
+    r"\textbf{a})",
     transform=ax_both_1.transAxes,
-    fontsize=40,
+    fontsize=34,
     va="top",
     ha="left",
 )
 ax_both_2.text(
     -0.17,
     1.12,
-    r"\textbf{b}",
+    r"\textbf{b})",
     transform=ax_both_2.transAxes,
-    fontsize=40,
+    fontsize=34,
     va="top",
     ha="left",
 )
 ax_both_3.text(
     -0.17,
     1.12,
-    r"\textbf{c}",
+    r"\textbf{c})",
     transform=ax_both_3.transAxes,
-    fontsize=40,
+    fontsize=34,
     va="top",
     ha="left",
 )
