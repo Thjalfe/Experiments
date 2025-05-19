@@ -38,6 +38,7 @@ save_figs = True
 data_loc = "../../data/classical-opt/sig-wl_same-as-qd/sweep_both_pumps_w_processed_merged_proper_data/p1-wl=1590.5-1596.0nm_p2-wl=1610.60-1572.68/data.pkl"
 data_loc = "../../data/classical-opt/sig-wl_same-as-qd/sweep_both_pumps_w_processed_merged_proper_data/p1-wl=1590.5-1596.25nm_p2-wl=1610.60-1570.69/data.pkl"
 qd_data_loc = "../../data/ce_data_from_qd_calc-from-peak.pkl"
+# qd_data_loc = "../../data/ce_data_from_qd_calc-from-lorentz-fit.pkl"
 extra_data_locs = glob(
     "../../data/classical-opt/sig-wl_same-as-qd/sweep_both_pumps_auto_pol_opt_780-fiber-out/**/data_processed.pkl",
     recursive=True,
@@ -60,14 +61,32 @@ with open(extra_data_loc, "rb") as f:
     extra_data = pickle.load(f)
 extra_data_pump_sep_thz = extra_data["processed_data"]["pump_sep_thz"]
 extra_data_idler_wls = extra_data["processed_data"]["idler_wls"]
-extra_data_ce_mean = extra_data["processed_data"]["ce_peak_mean"][:, 0]
-extra_data_ce_mean_lin = extra_data["processed_data"]["ce_peak_mean_lin"][:, 0] * 100
+extra_data_ce_mean_lin = (
+    extra_data["processed_data"]["ce_peak_mean_lin"][:, 0] * extra_data["duty_cycle"]
+)
+extra_data_ce_mean_lin = extra_data_ce_mean_lin / (
+    extra_data["duty_cycle"] * (1 + extra_data_ce_mean_lin)
+)
+extra_data_ce_mean = 10 * np.log10(extra_data_ce_mean_lin)
+extra_data_ce_mean_lin = extra_data_ce_mean_lin * 100
+for key in qd_data.keys():
+    try:
+        print(len(qd_data[key]))
+    except TypeError:
+        print(0)
 
 
-ce_classical_mean = data["processed_data"]["ce_peak_mean"]
-ce_classical_std = data["processed_data"]["ce_peak_std"]
-ce_classical_mean_lin = data["processed_data"]["ce_peak_mean_lin"] * 100
+ce_classical_mean_lin = data["processed_data"]["ce_peak_mean_lin"]
+# TODO: Nasty correction for depletion since it was not done while taking the data
+ce_classical_mean_lin[:, 0] = ce_classical_mean_lin[:, 0] * data["duty_cycle"][0]
+ce_classical_mean_lin[:, 0] = ce_classical_mean_lin[:, 0] / (
+    data["duty_cycle"][0] * (1 + ce_classical_mean_lin[:, 0])
+)
 ce_classical_std_lin = data["processed_data"]["ce_peak_std_lin"] * 100
+ce_classical_mean = 10 * np.log10(ce_classical_mean_lin)
+ce_classical_mean_lin = ce_classical_mean_lin * 100
+print(ce_classical_mean_lin[:, 0])
+ce_classical_std = data["processed_data"]["ce_peak_std"]
 classical_pump_sep_thz = data["processed_data"]["pump_sep_thz"]
 classical_red_idxs = data["processed_data"]["red_idxs"]
 classical_blue_idxs = data["processed_data"]["blue_idxs"]
@@ -149,6 +168,7 @@ fig6, ax6 = plot_ce_vs_detuning_wl_bottom_ax(
     extra_data_ce_mean=extra_data_ce_mean_lin,
 )
 ax6.set_xlim(np.min(idler_wls) - 0.2, np.max(idler_wls) + 0.1)
+ax6.set_ylim(ax6.get_ylim()[0], 100)
 ax6.text(
     -0.18,
     1.06,

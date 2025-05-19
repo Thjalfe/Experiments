@@ -6,6 +6,8 @@ import numpy as np
 from funcs.load_data import get_data_filenames, load_data_as_dict
 from funcs.processing import (
     calc_multiple_ces_from_peak_values,
+    find_idler_loc,
+    calc_ce_from_peak_values,
     find_multiple_idler_locs,
     mean_std_data,
 )
@@ -35,19 +37,53 @@ colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]  # type: ignore
 
 ref_file_names, data_file_names = get_data_filenames(data_dir)
 ref_data, duty_cycles = load_data_as_dict(ref_file_names)
+ref_data_mean_std = mean_std_data(ref_data)
 data, duty_cycles = load_data_as_dict(data_file_names)
+idler_locs, idler_wls, sig_wls = [], [], []
+for k in data.keys():
+    tmp_idler_locs, tmp_idler_wls, tmp_sig_wls = [], [], []
+    dat = data[k]
+    wl_ax = dat[0]
+    for i in range(1, len(dat)):
+        idler_loc, idler_wl, sig_wl = find_idler_loc(dat[i], wl_ax, k)
+        tmp_idler_locs.append(idler_loc)
+        tmp_idler_wls.append(idler_wl)
+        tmp_sig_wls.append(sig_wl)
+    idler_locs.append(tmp_idler_locs)
+    idler_wls.append(tmp_idler_wls)
+    sig_wls.append(tmp_sig_wls)
+idler_locs = np.array(idler_locs)
+idler_wls = np.array(idler_wls)
+sig_wls = np.array(sig_wls)
+ces = []
+count = 0
+for k in data.keys():
+    dat = data[k]
+    ref = ref_data[k]
+    ces_tmp = [
+        calc_ce_from_peak_values(
+            dat[i + 1],
+            ref_data_mean_std[k]["mean"],
+            idler_locs[count][i],
+            duty_cycles[count],
+        )
+        for i in range(len(dat) - 1)
+    ]
+    ces.append(ces_tmp)
+    count += 1
+# |%%--%%| <WzFxNPrdmv|e0VcR4oPQd>
 pump_wls_tuple = list(data.keys())
 thz_sep = np.array(
     [pump_wls_to_thz_sep(pump_wls_tuple[i]) for i in range(len(pump_wls_tuple))]
 )
 pump_wls_arr = np.array(pump_wls_tuple)
-ref_data_mean_std = mean_std_data(ref_data)
 data_mean_std = mean_std_data(data)
 idler_locs, idler_wls, sig_wls = find_multiple_idler_locs(data_mean_std)
 sig_wl = float(np.mean(sig_wls))
 ces, stds = calc_multiple_ces_from_peak_values(
     data_mean_std, ref_data_mean_std, idler_locs, duty_cycles
 )
+# |%%--%%| <e0VcR4oPQd|Z9cqH14aWh>
 ces = ces * 100
 stds = stds * 100
 data_to_save = {
@@ -82,7 +118,7 @@ ax.set_xlabel(r"$\nu_\mathrm{s} - \nu_\mathrm{i}$ [THz]")
 ax.set_ylabel(r"Peak Conversion Efficiency (\%)")
 
 
-# |%%--%%| <v49WUTXUO7|LE60wY9ojZ>
+# |%%--%%| <Z9cqH14aWh|LE60wY9ojZ>
 idxs_to_ignore = np.arange(0, 3)
 thz_sep_abs = np.abs(thz_sep)
 thz_sep_abs_sorted, ces_sorted, stds_sorted = sort_by_ascending_x_ax(

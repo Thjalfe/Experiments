@@ -419,7 +419,7 @@ def plot_ce_vs_detuning_wl_bottom_ax(
         ),
     )
     # secax.set_xlabel(r"$\nu_\mathrm{i}-\nu_\mathrm{s}$ [THz]", labelpad=10)
-    secax.set_xlabel(r"$\Delta\nu$ [THz]", labelpad=10)
+    secax.set_xlabel(r"Intraband detuning [THz]", labelpad=10)
     secax.xaxis.set_major_locator(MaxNLocator(nbins=7, integer=True))
     # ax.text(
     #     -0.18,

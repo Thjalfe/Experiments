@@ -24,7 +24,7 @@ plt.style.use("custom")
 figsize = (11, 8)
 plt.rcParams["figure.figsize"] = figsize
 plt.rcParams["text.latex.preamble"] = r"\usepackage{upgreek}\usepackage{amsmath}"
-save_figs = True
+save_figs = False
 # plt.rcParams["font.family"] = "serif"
 plt.rcParams["legend.fontsize"] = 24
 plt.rcParams["axes.labelsize"] = 48
@@ -393,7 +393,7 @@ def plot_g2_subplot(
     )
     ax1.set_xlim(-390, 390)
     # ax1.set_xlim(-290, -200)
-    ax1.set_xlabel(r"$\tau_\mathrm{delay}$ [ns]")
+    ax1.set_xlabel(r"$\tau$ [ns]")
     ax1.set_ylabel(r"$g^{(2)}(\tau)$")
     ax1.set_ylim(0, 2)
     ax1.legend(loc="upper right")
@@ -435,12 +435,12 @@ def plot_g2_subplot(
         linestyle="--",
     )
     ax3.set_xlim(-18, 18)
-    ax3.set_xlabel(r"$\tau_\mathrm{delay}$ [ns]")
+    ax3.set_xlabel(r"$\tau$ [ns]")
     ax3.yaxis.set_major_locator(MaxNLocator(integer=False, nbins=4))
     ax3.set_ylim(0, 2)
     ax3.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=8))
-    textbox_names = ["Signal", "Signal", "Converted signal"]
-    xy_coord_arr = [(0.15, 0.95), (0.215, 0.9), (0.4, 0.9)]
+    textbox_names = ["Signal", "Signal", "Idler (converted photons)"]
+    xy_coord_arr = [(0.15, 0.95), (0.215, 0.9), (0.6, 0.9)]
     for i, ax in enumerate([ax1, ax2, ax3]):
         ax.annotate(
             textbox_names[i],
@@ -449,6 +449,12 @@ def plot_g2_subplot(
             fontsize=28,
             ha="right",
             va="top",
+            bbox=dict(
+                boxstyle="round,pad=0.2",  # or 'square' or 'round4'
+                facecolor="white",
+                edgecolor="none",
+                alpha=0.4,  # transparency
+            ),
         )
     return fig, ax1, ax2, ax3
 

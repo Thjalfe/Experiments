@@ -89,3 +89,12 @@ IM-FWM/OD_large_separation/tmp_plots/telecom-wl=1580.0nm
 superk_filter_setup/data
 external_stay/data
 external_stay/processing/__pycache__
+external_stay/run_exp_funcs/__pycache__
+IM-FWM/QD/data
+external_stay/processing/processing_funcs/__pycache__
+external_stay/__pycache__
+external_stay/time_test
+external_stay/evgeny_thesis.pdf
+external_stay/first_two_dispersion_retrievals.pdf
+external_stay/only_FD_dispersion_retrieval.pdf
+external_stay/only_geometrical_dispersion_retrieval.pdf

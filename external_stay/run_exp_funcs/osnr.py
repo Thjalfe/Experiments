@@ -1,6 +1,12 @@
+import os
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 import pickle
+import sys
 import time
 
+project_root = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(project_root)
 import matplotlib.pyplot as plt
 import numpy as np
 from clients.laser_clients import AgilentLaserClient
@@ -43,6 +49,16 @@ def calc_OSNR(power_linear: np.ndarray, sidebands: np.ndarray) -> float:
     return 10 * np.log10(signal_power / noise_power)
 
 
+def plot_spectra(spectra_dict: dict, laser_powers: np.ndarray) -> tuple[Figure, Axes]:
+    fig, ax = plt.subplots()
+    for i, trace in enumerate(spectra_dict["spectra"]):
+        ax.plot(trace[0], trace[1], label=f"{laser_powers[i]} dBm")
+    ax.legend()
+    ax.set_xlabel("Wavelength [nm]")
+    ax.set_ylabel("Power [dBm]")
+    return fig, ax
+
+
 def osnr_multiple_laser_powers(
     laser_powers: np.ndarray,
     tls: AgilentLaserClient,
@@ -53,6 +69,7 @@ def osnr_multiple_laser_powers(
     save_data: bool,
     data_dir: str,
     loc_str: str,
+    show_plots: bool = True,
 ) -> dict:
     for power in laser_powers:
         tls.power = power
@@ -72,14 +89,12 @@ def osnr_multiple_laser_powers(
         spectra_dict["spectra_rolled"].append(rolled_spec)
         spectra_dict["OSNR"].append(osnr)
 
+    fig, ax = plot_spectra(spectra_dict, laser_powers)
+    if show_plots:
+        plt.show()
     if save_data:
         with open(f"{data_dir}/{loc_str}.pkl", "wb") as f:
             pickle.dump(spectra_dict, f)
-        fig, ax = plt.subplots()
-        for i, trace in enumerate(spectra_dict["spectra"]):
-            ax.plot(trace[0], trace[1], label=f"{laser_powers[i]} dBm")
-        ax.legend()
-        ax.set_xlabel("Wavelength [nm]")
-        ax.set_ylabel("Power [dBm]")
         fig.savefig(f"{data_dir}/{loc_str}_spectra.pdf", bbox_inches="tight")
+
     return spectra_dict

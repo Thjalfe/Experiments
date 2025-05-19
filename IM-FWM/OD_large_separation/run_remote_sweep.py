@@ -26,7 +26,7 @@ import importlib
 from remote_control_toptica_w_flask import DLCControlClient
 from clients.osa_clients import OSAClient
 from clients.laser_clients import AndoLaserClient, TiSapphireClient, VerdiLaserClient
-from legacy_devices.osa_control import OSA
+from devices.osa_control import OSA
 
 # importlib.reload(sys.modules["misc"])
 

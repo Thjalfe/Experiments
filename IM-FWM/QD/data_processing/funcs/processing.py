@@ -39,9 +39,11 @@ def calc_ce_from_peak_values(
 ) -> float:
     sig_loc = np.argmax(data)
     idler_val = data[idler_loc] - ref[idler_loc]
+    # idler_val = data[idler_loc] - 0
     sig_val = data[sig_loc]
     ce = idler_val / sig_val
-    return ce / duty_cycle
+    ce_p = ce / (duty_cycle * (1 + ce))
+    return ce_p
 
 
 def calc_ce_std_from_peak_values(

@@ -27,7 +27,7 @@ paper_dir = "/home/thjalfe/Documents/PhD/Projects/papers/FC_QD/figs"
 
 data_dir = "../../data/"
 colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]  # type: ignore
-save_figs = True
+save_figs = False
 
 data_loc = "../../data/classical-opt/sig-wl_same-as-qd/sweep_both_pumps_auto_pol_opt_780-fiber-out/p1-wl=1590.5-1596.0nm_p2-wl=1610.60-1572.40/data.pkl"
 # data_loc = "../../data/classical-opt/sig-wl_same-as-qd/sweep_both_pumps_auto_pol_opt_1060-fiber-out_tisa-sig/p1-wl=1591-1594.75nm_p2-wl=1608.60-1581.80/data.pkl"
@@ -166,6 +166,7 @@ ax.set_xlabel(r"$\Delta\nu$ [THz]")
 ax.set_ylabel(r"$\eta_\mathrm{peak}$ [dB]")
 if save_figs:
     fig.savefig(f"{paper_dir}/ce_vs_detuning_blue_all_dcs.pdf", bbox_inches="tight")
+# |%%--%%| <mqpcwtWAaz|TXt55gQOFe>
 
 ce_diff_between_dc_rel_to_cw = np.array(
     [
@@ -261,7 +262,7 @@ if save_figs:
 # ax.plot(p1_wl, p2_wl, "-o")
 
 
-# |%%--%%| <MV3J8Dp0rM|avffDcxZB8>
+# |%%--%%| <TXt55gQOFe|avffDcxZB8>
 def thz_to_wls(thz, thz_sep, idler_wls):
     poly_coeffs = np.polyfit(thz_sep, idler_wls, 1)
     poly = np.poly1d(poly_coeffs)
